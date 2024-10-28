@@ -7,14 +7,40 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { PanelBottom, PanelLeft, Settings } from "lucide-react";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { ImperativePanelHandle } from "react-resizable-panels";
 
-export default function Home() {
-  const ref = useRef<ImperativePanelHandle>(null);
+import { TooltipButton } from "@/components/tooltipButton";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import useScreenSize from "@/hooks/useScreenSize";
 
-  const togglePanel = () => {
-    const panel = ref.current;
+const sizes = {
+  min: 150,
+  default: 200,
+};
+
+export default function Home() {
+  const { width } = useScreenSize();
+  const percentSizes = {
+    min: (sizes.min / width) * 100,
+    default: (sizes.default / width) * 100,
+  };
+
+  const explorerRef = useRef<ImperativePanelHandle>(null);
+  const outputRef = useRef<ImperativePanelHandle>(null);
+
+  const toggleExplorer = () => {
+    const panel = explorerRef.current;
+    if (panel) {
+      if (panel.isCollapsed()) {
+        panel.expand();
+      } else {
+        panel.collapse();
+      }
+    }
+  };
+  const toggleOutput = () => {
+    const panel = outputRef.current;
     if (panel) {
       if (panel.isCollapsed()) {
         panel.expand();
@@ -24,39 +50,93 @@ export default function Home() {
     }
   };
 
+  const handleAskGeorge = () => {
+    console.log("ask george");
+  };
+
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.metaKey && e.key === "Enter") {
+      e.preventDefault();
+      handleAskGeorge();
+    }
+    if (e.metaKey && e.key === "b") {
+      e.preventDefault();
+      toggleExplorer();
+    }
+    if (e.metaKey && e.key === "j") {
+      e.preventDefault();
+      toggleOutput();
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
     <div className="w-full h-full flex flex-col">
       <div className="h-12 w-full flex items-center justify-between border-b p-1 px-2 text-sm">
         <div className="flex items-center gap-2">
           <div className="font-semibold">SE212</div>
-          <Button variant="secondary" size="sm">
+          <TooltipButton
+            variant="secondary"
+            size="sm"
+            onClick={handleAskGeorge}
+            tooltip="Ask George (⌘⏎)"
+          >
             Ask George
-          </Button>
+          </TooltipButton>
         </div>
         <div className="flex items-center">
-          <Button variant="ghost" size="smIcon" onClick={togglePanel}>
+          <TooltipButton
+            variant="ghost"
+            size="smIcon"
+            onClick={toggleExplorer}
+            tooltip="Toggle Explorer (⌘B)"
+          >
             <PanelLeft />
-          </Button>
-          <Button variant="ghost" size="smIcon">
+          </TooltipButton>
+          <TooltipButton
+            variant="ghost"
+            size="smIcon"
+            onClick={toggleOutput}
+            tooltip="Toggle Explorer (⌘J)"
+          >
             <PanelBottom />
-          </Button>
-          <Button variant="ghost" size="smIcon">
+          </TooltipButton>
+
+          <TooltipButton variant="ghost" size="smIcon" tooltip="Settings (⌘K)">
             <Settings />
-          </Button>
+          </TooltipButton>
         </div>
       </div>
       <ResizablePanelGroup className="grow" direction="horizontal">
         <ResizablePanel
-          ref={ref}
+          ref={explorerRef}
           collapsible
-          maxSize={30}
-          defaultSize={15}
-          minSize={10}
+          maxSize={40}
+          defaultSize={percentSizes.default}
+          minSize={percentSizes.min}
         >
-          One
+          Explorer
         </ResizablePanel>
         <ResizableHandle />
-        <ResizablePanel defaultSize={85}>Two</ResizablePanel>
+        <ResizablePanel defaultSize={85}>
+          <ResizablePanelGroup direction="vertical">
+            <ResizablePanel defaultSize={100}>Code</ResizablePanel>
+            <ResizableHandle />
+            <ResizablePanel
+              ref={outputRef}
+              collapsible
+              defaultSize={0}
+              maxSize={50}
+              minSize={10}
+            >
+              Output
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </ResizablePanel>
       </ResizablePanelGroup>
     </div>
   );
