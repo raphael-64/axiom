@@ -28,7 +28,7 @@ const TooltipButton = ({
             {children}
           </Button>
         </TooltipTrigger>
-        <TooltipContent>{tooltip}</TooltipContent>
+        <TooltipContent side="bottom">{tooltip}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
