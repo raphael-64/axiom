@@ -90,14 +90,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     default: (sizes.default / width) * 100,
   };
 
-  const handleEditorWillMount: BeforeMount = (monaco) => {
-    // monaco.editor.addKeybindingRules([
-    //   {
-    //     keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyG,
-    //     command: "null",
-    //   },
-    // ])
-  };
+  const handleEditorWillMount: BeforeMount = (monaco) => {};
 
   const handleEditorMount: OnMount = (
     editor: monaco.editor.IStandaloneCodeEditor,
@@ -118,6 +111,10 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
 
     registerGeorge(editor, monaco);
     monaco.editor.setModelLanguage(editor.getModel()!, "george");
+
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, () => {
+      setIsSettingsOpen(true);
+    });
   };
 
   return (
@@ -179,6 +176,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
             <ResizablePanelGroup direction="vertical">
               <ResizablePanel defaultSize={100}>
                 <Editor
+                  beforeMount={handleEditorWillMount}
                   onMount={handleEditorMount}
                   className="w-full h-full"
                   theme="vs-dark"

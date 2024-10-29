@@ -5,7 +5,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Settings, Keyboard, FileCode2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -38,6 +38,10 @@ export default function SettingsModal({
   setOpen: (open: boolean) => void;
 }) {
   const [activeCategory, setActiveCategory] = useState<Category>("editor");
+
+  useEffect(() => {
+    if (!open) setActiveCategory("editor");
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -93,50 +97,6 @@ export default function SettingsModal({
                 </div>
               ) : (
                 <div className="space-y-2 text-sm">
-                  {shortcuts.map((item) => (
-                    <div
-                      key={item.label}
-                      className="flex items-center justify-between"
-                    >
-                      <span>{item.label}</span>
-                      <span className="w-8 justify-center py-0.5 inline-flex text-muted-foreground border rounded border-b-2 bg-muted/25">
-                        {item.shortcut}
-                      </span>
-                    </div>
-                  ))}
-                  {shortcuts.map((item) => (
-                    <div
-                      key={item.label}
-                      className="flex items-center justify-between"
-                    >
-                      <span>{item.label}</span>
-                      <span className="w-8 justify-center py-0.5 inline-flex text-muted-foreground border rounded border-b-2 bg-muted/25">
-                        {item.shortcut}
-                      </span>
-                    </div>
-                  ))}
-                  {shortcuts.map((item) => (
-                    <div
-                      key={item.label}
-                      className="flex items-center justify-between"
-                    >
-                      <span>{item.label}</span>
-                      <span className="w-8 justify-center py-0.5 inline-flex text-muted-foreground border rounded border-b-2 bg-muted/25">
-                        {item.shortcut}
-                      </span>
-                    </div>
-                  ))}
-                  {shortcuts.map((item) => (
-                    <div
-                      key={item.label}
-                      className="flex items-center justify-between"
-                    >
-                      <span>{item.label}</span>
-                      <span className="w-8 justify-center py-0.5 inline-flex text-muted-foreground border rounded border-b-2 bg-muted/25">
-                        {item.shortcut}
-                      </span>
-                    </div>
-                  ))}
                   {shortcuts.map((item) => (
                     <div
                       key={item.label}
