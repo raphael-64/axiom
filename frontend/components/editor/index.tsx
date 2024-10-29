@@ -6,7 +6,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { PanelBottom, PanelLeft, Settings } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ImperativePanelHandle } from "react-resizable-panels";
 
 import { TooltipButton } from "@/components/tooltipButton";
@@ -14,17 +14,22 @@ import { TooltipButton } from "@/components/tooltipButton";
 import { useWindowSize } from "@uidotdev/usehooks";
 import Explorer from "./explorer";
 import { FilesResponse } from "@/lib/types";
+import { BeforeMount, Editor, Monaco, OnMount } from "@monaco-editor/react";
+import monaco from "monaco-editor";
 
 const sizes = {
   min: 100,
   default: 150,
 };
 
-export default function Editor({ files }: { files: FilesResponse }) {
+export default function EditorLayout({ files }: { files: FilesResponse }) {
   const { width } = useWindowSize();
 
   const explorerRef = useRef<ImperativePanelHandle>(null);
   const outputRef = useRef<ImperativePanelHandle>(null);
+
+  const [editorRef, setEditorRef] =
+    useState<monaco.editor.IStandaloneCodeEditor>();
 
   const toggleExplorer = () => {
     const panel = explorerRef.current;
@@ -78,6 +83,33 @@ export default function Editor({ files }: { files: FilesResponse }) {
     default: (sizes.default / width) * 100,
   };
 
+  const handleEditorWillMount: BeforeMount = (monaco) => {
+    // monaco.editor.addKeybindingRules([
+    //   {
+    //     keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyG,
+    //     command: "null",
+    //   },
+    // ])
+  };
+
+  const handleEditorMount: OnMount = (
+    editor: monaco.editor.IStandaloneCodeEditor,
+    monaco: Monaco
+  ) => {
+    setEditorRef(editor);
+
+    monaco.editor.defineTheme("dark", {
+      base: "vs-dark",
+      inherit: true,
+      rules: [],
+      colors: {
+        "editor.background": "#0A0A0A",
+      },
+    });
+
+    monaco.editor.setTheme("dark");
+  };
+
   return (
     <div className="w-full h-full flex flex-col">
       <div className="w-full flex items-center justify-between border-b p-1.5 px-2 text-sm">
@@ -128,7 +160,27 @@ export default function Editor({ files }: { files: FilesResponse }) {
         <ResizableHandle />
         <ResizablePanel defaultSize={85}>
           <ResizablePanelGroup direction="vertical">
-            <ResizablePanel defaultSize={100}>Code</ResizablePanel>
+            <ResizablePanel defaultSize={100}>
+              <Editor
+                defaultLanguage="javascript"
+                defaultValue="console.log('hi')"
+                onMount={handleEditorMount}
+                className="w-full h-full"
+                theme="vs-dark"
+                options={{
+                  minimap: {
+                    enabled: false,
+                  },
+                  padding: {
+                    bottom: 4,
+                    top: 4,
+                  },
+                  scrollBeyondLastLine: false,
+                  fixedOverflowWidgets: true,
+                  // lineDecorationsWidth: 0,
+                }}
+              />
+            </ResizablePanel>
             <ResizableHandle />
             <ResizablePanel
               ref={outputRef}
