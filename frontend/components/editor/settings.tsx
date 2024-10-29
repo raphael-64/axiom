@@ -24,6 +24,7 @@ const categories = [
 ];
 
 const shortcuts = [
+  { label: "Ask George", shortcut: "⌘G" },
   { label: "Toggle Sidebar", shortcut: "⌘B" },
   { label: "Toggle Output", shortcut: "⌘J" },
   { label: "Open Settings", shortcut: "⌘K" },

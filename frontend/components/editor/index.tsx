@@ -18,6 +18,7 @@ import { BeforeMount, Editor, Monaco, OnMount } from "@monaco-editor/react";
 import monaco from "monaco-editor";
 import { registerGeorge } from "@/lib/lang";
 import SettingsModal from "./settings";
+import { askGeorge } from "@/lib/actions";
 
 const sizes = {
   min: 100,
@@ -55,12 +56,16 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     }
   };
 
-  const handleAskGeorge = () => {
-    console.log("ask george");
+  const handleAskGeorge = async () => {
+    const body = editorRef?.getModel()?.getValue();
+    console.log("ask george\n\n" + body);
+    if (!body) return;
+    const response = await askGeorge(body);
+    console.log(response);
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.metaKey && e.key === "Enter") {
+    if (e.metaKey && e.key === "g") {
       e.preventDefault();
       handleAskGeorge();
     }
@@ -90,7 +95,14 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     default: (sizes.default / width) * 100,
   };
 
-  const handleEditorWillMount: BeforeMount = (monaco) => {};
+  const handleEditorWillMount: BeforeMount = (monaco) => {
+    // monaco.editor.addKeybindingRules([
+    //   {
+    //     keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyG,
+    //     command: "null",
+    //   },
+    // ]);
+  };
 
   const handleEditorMount: OnMount = (
     editor: monaco.editor.IStandaloneCodeEditor,
@@ -115,6 +127,10 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, () => {
       setIsSettingsOpen(true);
     });
+
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyG, () => {
+      handleAskGeorge();
+    });
   };
 
   return (
@@ -128,7 +144,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
               variant="secondary"
               size="sm"
               onClick={handleAskGeorge}
-              tooltip="Ask George (⌘⏎)"
+              tooltip="Ask George (⌘G)"
             >
               Ask George
             </TooltipButton>
