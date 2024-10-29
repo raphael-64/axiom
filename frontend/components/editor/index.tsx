@@ -16,6 +16,7 @@ import Explorer from "./explorer";
 import { FilesResponse } from "@/lib/types";
 import { BeforeMount, Editor, Monaco, OnMount } from "@monaco-editor/react";
 import monaco from "monaco-editor";
+import { registerGeorge } from "@/lib/lang";
 
 const sizes = {
   min: 100,
@@ -108,6 +109,9 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     });
 
     monaco.editor.setTheme("dark");
+
+    registerGeorge(editor, monaco);
+    monaco.editor.setModelLanguage(editor.getModel()!, "george");
   };
 
   return (
@@ -162,8 +166,6 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
           <ResizablePanelGroup direction="vertical">
             <ResizablePanel defaultSize={100}>
               <Editor
-                defaultLanguage="javascript"
-                defaultValue="console.log('hi')"
                 onMount={handleEditorMount}
                 className="w-full h-full"
                 theme="vs-dark"
