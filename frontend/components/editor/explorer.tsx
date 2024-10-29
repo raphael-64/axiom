@@ -78,7 +78,7 @@ function File({
       <ContextMenuTrigger asChild>
         <button
           key={file.path}
-          className={`hover:bg-muted w-full text-left pr-2 pl-7 py-0.5 relative group ${
+          className={`hover:bg-muted w-full text-left pr-2 pl-6 py-0.5 relative group ${
             isContextMenuOpen || isDropdownOpen ? "bg-muted" : ""
           }`}
         >
