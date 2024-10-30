@@ -8,4 +8,3 @@ const greet = (name) => {
     return "hi";
 };
 exports.greet = greet;
-// You can add more utility functions here
