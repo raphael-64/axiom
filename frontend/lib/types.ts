@@ -11,4 +11,5 @@ export type FilesResponse = {
 export interface Tab {
   name: string;
   path: string;
+  workspaceId?: string;
 }

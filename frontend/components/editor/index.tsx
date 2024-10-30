@@ -1,5 +1,6 @@
 "use client";
 
+import monaco from "monaco-editor";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -15,12 +16,14 @@ import { useWindowSize } from "@uidotdev/usehooks";
 import Explorer from "./explorer";
 import { FilesResponse, Tab } from "@/lib/types";
 import { BeforeMount, Editor, Monaco, OnMount } from "@monaco-editor/react";
-import monaco from "monaco-editor";
 import { registerGeorge } from "@/lib/lang";
 import SettingsModal from "./settings";
 import { askGeorge } from "@/lib/actions";
 import { UploadModal } from "./upload";
 import Tabs from "./tabs";
+import * as Y from "yjs";
+import { WebsocketProvider } from "y-websocket";
+import { MonacoBinding } from "y-monaco";
 
 const sizes = {
   min: 140,
@@ -41,6 +44,11 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
   const [georgeResponse, setGeorgeResponse] = useState<string>("");
   const [openTabs, setOpenTabs] = useState<Tab[]>([]);
   const [activeTabIndex, setActiveTabIndex] = useState<number>(-1);
+  const [monacoBinding, setMonacoBinding] = useState<MonacoBinding | null>(
+    null
+  );
+  const ydoc = useRef<Y.Doc>(new Y.Doc());
+  const [monacoInstance, setMonacoInstance] = useState<Monaco>();
 
   const toggleExplorer = () => {
     const panel = explorerRef.current;
@@ -108,6 +116,44 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  const handleEditorContent = (path: string) => {
+    if (!editorRef || !monacoInstance) return;
+
+    // Clean up previous binding
+    monacoBinding?.destroy();
+
+    // Get content from localStorage or initialize
+    console.log(path);
+    const content = localStorage.getItem(path) || "";
+    console.log(content);
+
+    // Set up new model and binding
+    const model = monacoInstance.editor.createModel(content, "george");
+    editorRef.setModel(model);
+
+    // Set up Yjs
+    const ytext = ydoc.current.getText(path);
+    const provider = new WebsocketProvider(
+      "ws://localhost:1234", // Replace with your WebSocket server URL
+      path,
+      ydoc.current
+    );
+
+    const binding = new MonacoBinding(
+      ytext,
+      model,
+      new Set([editorRef]),
+      provider.awareness
+    );
+
+    setMonacoBinding(binding);
+
+    // Set up change listener for localStorage
+    model.onDidChangeContent(() => {
+      localStorage.setItem(path, model.getValue());
+    });
+  };
+
   const handleFileClick = (path: string, name: string) => {
     const existingIndex = openTabs.findIndex((tab) => tab.path === path);
 
@@ -117,18 +163,36 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
       setOpenTabs([...openTabs, { path, name }]);
       setActiveTabIndex(openTabs.length);
     }
+    handleEditorContent(path);
   };
 
   const handleTabClose = (indexToClose: number) => {
     setOpenTabs((tabs) => tabs.filter((_, i) => i !== indexToClose));
     if (indexToClose === activeTabIndex) {
-      setActiveTabIndex((prev) =>
-        indexToClose === openTabs.length - 1 ? prev - 1 : prev
-      );
+      setActiveTabIndex((prev) => {
+        if (indexToClose === openTabs.length - 1) {
+          return prev - 1;
+        }
+        handleEditorContent(openTabs[prev].path);
+        return prev;
+      });
     } else if (indexToClose < activeTabIndex) {
       setActiveTabIndex((prev) => prev - 1);
     }
   };
+
+  useEffect(() => {
+    if (activeTabIndex >= 0 && openTabs[activeTabIndex]) {
+      handleEditorContent(openTabs[activeTabIndex].path);
+    }
+  }, [activeTabIndex]);
+
+  useEffect(() => {
+    return () => {
+      ydoc.current.destroy();
+      monacoBinding?.destroy();
+    };
+  }, []);
 
   if (!width) return null;
 
@@ -151,6 +215,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     monaco: Monaco
   ) => {
     setEditorRef(editor);
+    setMonacoInstance(monaco);
 
     monaco.editor.defineTheme("dark", {
       base: "vs-dark",
@@ -184,7 +249,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
           <div className="flex items-center gap-2">
             <div className="font-semibold">SE212</div>
             <TooltipButton
-              variant="default"
+              variant="secondary"
               size="sm"
               onClick={handleAskGeorge}
               tooltip="Ask George (⌘G)"
