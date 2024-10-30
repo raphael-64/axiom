@@ -19,6 +19,7 @@ import monaco from "monaco-editor";
 import { registerGeorge } from "@/lib/lang";
 import SettingsModal from "./settings";
 import { askGeorge } from "@/lib/actions";
+import { UploadModal } from "./upload";
 
 const sizes = {
   min: 100,
@@ -34,6 +35,9 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
   const [editorRef, setEditorRef] =
     useState<monaco.editor.IStandaloneCodeEditor>();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [georgeResponse, setGeorgeResponse] = useState<string>("");
 
   const toggleExplorer = () => {
     const panel = explorerRef.current;
@@ -58,10 +62,19 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
 
   const handleAskGeorge = async () => {
     const body = editorRef?.getModel()?.getValue();
-    console.log("ask george\n\n" + body);
-    if (!body) return;
-    const response = await askGeorge(body);
-    console.log(response);
+    if (!body || loading) return;
+
+    setLoading(true);
+    try {
+      const response = await askGeorge(body);
+      setGeorgeResponse(response);
+      outputRef.current?.expand();
+    } catch (error) {
+      console.error(error);
+      setGeorgeResponse("Error: Failed to get response from George");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
@@ -80,6 +93,10 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     if (e.metaKey && e.key === "k") {
       e.preventDefault();
       setIsSettingsOpen(true);
+    }
+    if (e.metaKey && e.key === "u") {
+      e.preventDefault();
+      setIsUploadOpen(true);
     }
   };
 
@@ -136,6 +153,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
   return (
     <>
       <SettingsModal open={isSettingsOpen} setOpen={setIsSettingsOpen} />
+      <UploadModal open={isUploadOpen} setOpen={setIsUploadOpen} />
       <div className="w-full h-full flex flex-col">
         <div className="w-full flex items-center justify-between border-b p-1.5 px-2 text-sm">
           <div className="flex items-center gap-2">
@@ -145,8 +163,9 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
               size="sm"
               onClick={handleAskGeorge}
               tooltip="Ask George (⌘G)"
+              disabled={loading}
             >
-              Ask George
+              {loading ? "Asking George..." : "Ask George"}
             </TooltipButton>
           </div>
           <div className="flex items-center">
@@ -215,10 +234,16 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
                 ref={outputRef}
                 collapsible
                 defaultSize={0}
-                maxSize={50}
+                maxSize={80}
                 minSize={10}
               >
-                Output
+                <div
+                  className={`p-4 h-full overflow-auto whitespace-pre-wrap font-mono text-sm ${
+                    georgeResponse ? "" : "text-muted-foreground"
+                  }`}
+                >
+                  {georgeResponse || "No response."}
+                </div>
               </ResizablePanel>
             </ResizablePanelGroup>
           </ResizablePanel>
