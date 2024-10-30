@@ -11,13 +11,25 @@ npm run dev
 
 # Prisma
 
-1. Run a migration to create your database tables with Prisma Migrate
+1. Compile the Prisma Schema
+
+```
+npx prisma generate
+```
+
+2. Run a migration to create your database tables with Prisma Migrate
 
 ```
 npx prisma migrate dev --name init
 ```
 
-2. Explore the data in Prisma Studio
+3. (Optional) Run the seed to initialize it with some values
+
+```
+npx prisma db seed
+```
+
+4. Explore the data in Prisma Studio
 
 ```
 npx prisma studio
