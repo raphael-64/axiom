@@ -20,6 +20,7 @@ const socketClient_1 = require("@services/socketClient"); // Adjust the path as 
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const port = process.env.PORT || 3000;
+const load_files_locally = false;
 // Create an HTTP server
 const httpServer = (0, http_1.createServer)(app);
 // Initialize Socket.IO with the HTTP server
@@ -31,6 +32,10 @@ const io = new socket_io_1.Server(httpServer, {
 const getFiles = () => __awaiter(void 0, void 0, void 0, function* () {
     const files = yield fetch("https://student.cs.uwaterloo.ca/~se212/files.json");
     return yield files.json();
+});
+const getFile = (filename) => __awaiter(void 0, void 0, void 0, function* () {
+    const file = yield fetch(`https://student.cs.uwaterloo.ca/~se212/${filename}`);
+    return yield file.json();
 });
 // Integrate the connection handler with Socket.IO
 (0, socketClient_1.handleConnection)(io);
@@ -46,9 +51,9 @@ app.get("/get-workspaces/:userId", (req, res) => {
 app.post("/update-sharing", (req, res) => {
 });
 //Create a new workspace
-app.put("/create-workspace/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.put("/create-workspace/:assignmentId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     // Get all of the files
-    const assignmentId = "Assignment 1";
+    const assignmentId = req.params.assignmentId;
     const files_map = yield getFiles(); // Await the result of getFiles
     res.send(files_map);
     let files = [];
@@ -59,10 +64,20 @@ app.put("/create-workspace/", (req, res) => __awaiter(void 0, void 0, void 0, fu
     });
     console.log(files);
     // Check if files is not null before iterating
+    let loaded_files = [];
     if (files) {
-        files.forEach((file) => {
-            console.log(file.name);
-        });
+        if (load_files_locally) {
+            files.forEach((file) => {
+            });
+        }
+        else {
+            files.forEach((file) => {
+                let filename = file.name;
+                let filepath = file.path;
+                let fileContent = yield getFile(filepath);
+                // continue from here next tiem
+            });
+        }
     }
 }));
 //Delete a workspace
