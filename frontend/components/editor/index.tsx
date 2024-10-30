@@ -26,6 +26,7 @@ import { WebsocketProvider } from "y-websocket";
 import { MonacoBinding } from "y-monaco";
 import { Socket, io } from "socket.io-client";
 import { toast } from "sonner";
+import ManageAccessModal from "./access";
 
 const sizes = {
   min: 140,
@@ -42,6 +43,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     useState<monaco.editor.IStandaloneCodeEditor>();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [manageAccessId, setManageAccessId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [georgeResponse, setGeorgeResponse] = useState<string>("");
   const [openTabs, setOpenTabs] = useState<Tab[]>([]);
@@ -182,9 +184,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
       });
     } else {
       // Local file
-      console.log(path);
       const content = localStorage.getItem(path) || "";
-      console.log(content);
       const model = monacoInstance.editor.createModel(content, "george");
       editorRef.setModel(model);
 
@@ -334,6 +334,11 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
 
   return (
     <>
+      <ManageAccessModal
+        open={!!manageAccessId}
+        setOpen={(open) => setManageAccessId(open ? manageAccessId : null)}
+        workspaceId={manageAccessId}
+      />
       <SettingsModal open={isSettingsOpen} setOpen={setIsSettingsOpen} />
       <UploadModal open={isUploadOpen} setOpen={setIsUploadOpen} />
       <div className="w-full h-full flex flex-col">
@@ -390,6 +395,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
               files={files}
               onFileClick={handleFileClick}
               openUpload={() => setIsUploadOpen(true)}
+              openAccess={(workspaceId) => setManageAccessId(workspaceId)}
             />
           </ResizablePanel>
           <ResizableHandle />

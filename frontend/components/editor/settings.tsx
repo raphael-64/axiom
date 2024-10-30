@@ -46,9 +46,9 @@ export default function SettingsModal({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-2xl p-0 gap-0">
+      <DialogContent className="max-w-xl p-0 gap-0">
         <div className="flex h-96">
-          <div className="border-r p-2 space-y-0.5 w-48">
+          <div className="border-r p-2 space-y-0.5 w-48 bg-tabs-bg">
             {categories.map((category) => (
               <Button
                 key={category.id}

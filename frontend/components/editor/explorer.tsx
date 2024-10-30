@@ -8,6 +8,7 @@ import {
   Plus,
   RotateCw,
   Upload,
+  Users,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -40,14 +41,37 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+const testWorkspaces: FilesResponse = [
+  {
+    name: "test1",
+    files: [
+      {
+        name: "test1.grg",
+        path: "test1.grg",
+      },
+    ],
+  },
+  {
+    name: "test2",
+    files: [
+      {
+        name: "test2.grg",
+        path: "test2.grg",
+      },
+    ],
+  },
+];
+
 export default function Explorer({
   files,
   onFileClick,
   openUpload,
+  openAccess,
 }: {
   files: FilesResponse;
   onFileClick: (path: string, name: string) => void;
   openUpload: () => void;
+  openAccess: (workspaceId: string) => void;
 }) {
   return (
     <ResizablePanelGroup direction="vertical">
@@ -113,11 +137,13 @@ export default function Explorer({
               </PopoverContent>
             </Popover>
           </div>
-          {files.map((folder) => (
+          {testWorkspaces.map((folder) => (
             <FolderItem
               key={folder.name}
               folder={folder}
               onFileClick={onFileClick}
+              isWorkspace
+              openAccess={openAccess}
             />
           ))}
         </div>
@@ -129,9 +155,13 @@ export default function Explorer({
 function FolderItem({
   folder,
   onFileClick,
+  isWorkspace,
+  openAccess,
 }: {
   folder: FilesResponse[0];
   onFileClick: (path: string, name: string) => void;
+  isWorkspace?: boolean;
+  openAccess?: (workspaceId: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -139,10 +169,22 @@ function FolderItem({
     <div>
       <button
         onClick={() => setIsOpen((prev) => !prev)}
-        className="flex items-center gap-1 hover:bg-muted w-full px-2 h-6"
+        className={`flex items-center gap-1 hover:bg-muted w-full px-2 h-6 relative ${
+          isWorkspace ? "group/workspace" : ""
+        }`}
       >
         <span className="w-4 text-xs">{isOpen ? "▼" : "▶"}</span>
         {folder.name}
+        <div
+          tabIndex={0}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (isWorkspace) openAccess?.(folder.name);
+          }}
+          className={`absolute right-0 top-0 h-6 w-6 flex group-hover/workspace:visible invisible items-center justify-center`}
+        >
+          <Users className="w-3 h-3" />
+        </div>
       </button>
 
       {isOpen && (
@@ -174,7 +216,7 @@ function File({
       <ContextMenuTrigger asChild>
         <button
           onClick={() => onFileClick(file.path, file.name)}
-          className={`hover:bg-muted w-full text-left pr-2 pl-7 py-0.5 relative group ${
+          className={`hover:bg-muted w-full text-left pr-2 pl-7 py-0.5 relative group/file ${
             isContextMenuOpen || isDropdownOpen ? "bg-muted" : ""
           }`}
         >
@@ -213,7 +255,7 @@ function FileMenu({
       <DropdownMenuTrigger asChild>
         <div
           tabIndex={0}
-          className={`absolute right-0 top-0 h-6 w-6 flex group-hover:visible items-center justify-center ${
+          className={`absolute right-0 top-0 h-6 w-6 flex group-hover/file:visible items-center justify-center ${
             isOpen ? "visible" : "invisible"
           }`}
         >
