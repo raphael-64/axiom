@@ -1,0 +1,23 @@
+#u username1 username2
+#a 03
+
+#q 06
+
+(8 marks) Formalize the following statements in UNTYPED predicate 
+logic. State the English phrases that your predicates and 
+functions (and constants if not obvious) represent.  
+
+
+#q 06a
+
+Hershey is a dog and he eats a greater number of 
+sticks than all other dogs. 
+
+
+#q 06b
+
+(Slightly revised sentence to clarify as of Fri 27 Sep 13:00) 
+
+All tribes have at least one dragon who is a 
+member of the tribe and who is magical.
+

@@ -1,0 +1,10 @@
+#u username1 username2
+#a 02
+
+#q 02
+
+(8 marks) Use transformational proof to convert the following 
+formula to DNF:
+
+(b | c => a) | !a => !(c => !d)
+
