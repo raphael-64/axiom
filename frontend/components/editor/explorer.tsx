@@ -1,7 +1,14 @@
 import { FilesResponse } from "@/lib/types";
 import { useState } from "react";
 import { TooltipButton } from "../tooltipButton";
-import { Download, MoreHorizontal, RotateCw, Upload } from "lucide-react";
+import {
+  Download,
+  Files,
+  MoreHorizontal,
+  Plus,
+  RotateCw,
+  Upload,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,37 +21,107 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "../ui/resizable";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "../ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function Explorer({
   files,
   onFileClick,
+  openUpload,
 }: {
   files: FilesResponse;
   onFileClick: (path: string, name: string) => void;
+  openUpload: () => void;
 }) {
   return (
-    <div className="py-2 overflow-y-auto text-sm">
-      <div className="flex items-center justify-between mb-1 px-2">
-        <div className="font-semibold text-xs text-muted-foreground">
-          Explorer
+    <ResizablePanelGroup direction="vertical">
+      <ResizablePanel defaultSize={75}>
+        <div className="py-2 overflow-y-auto text-sm">
+          <div className="flex items-center justify-between mb-1 px-2">
+            <div className="font-semibold text-xs text-muted-foreground">
+              Explorer
+            </div>
+            <TooltipButton
+              variant="ghost"
+              size="xsIcon"
+              className="!text-muted-foreground"
+              tooltip="Upload File (⌘U)"
+              onClick={openUpload}
+            >
+              <Upload className="!size-3" />
+            </TooltipButton>
+          </div>
+          {files.map((folder) => (
+            <FolderItem
+              key={folder.name}
+              folder={folder}
+              onFileClick={onFileClick}
+            />
+          ))}
         </div>
-        <TooltipButton
-          variant="ghost"
-          size="xsIcon"
-          className="!text-muted-foreground"
-          tooltip="Upload File (⌘U)"
-        >
-          <Upload className="!w-3 !h-3" />
-        </TooltipButton>
-      </div>
-      {files.map((folder) => (
-        <FolderItem
-          key={folder.name}
-          folder={folder}
-          onFileClick={onFileClick}
-        />
-      ))}
-    </div>
+      </ResizablePanel>
+      <ResizableHandle />
+      <ResizablePanel defaultSize={25} minSize={10} maxSize={50}>
+        <div className="py-2 overflow-y-auto text-sm">
+          <div className="flex items-center justify-between mb-1 px-2">
+            <div className="font-semibold text-xs text-muted-foreground">
+              Workspaces
+            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="xsIcon"
+                  className="!text-muted-foreground"
+                >
+                  <Plus className="!size-3" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent side="right" className="w-48">
+                <Select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Group" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {files.map((option) => (
+                      <SelectItem key={option.name} value={option.name}>
+                        {option.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button className="w-full mt-2" size="sm" variant="secondary">
+                  <Plus className="!size-3" /> Create
+                </Button>
+              </PopoverContent>
+            </Popover>
+          </div>
+          {files.map((folder) => (
+            <FolderItem
+              key={folder.name}
+              folder={folder}
+              onFileClick={onFileClick}
+            />
+          ))}
+        </div>
+      </ResizablePanel>
+    </ResizablePanelGroup>
   );
 }
 
