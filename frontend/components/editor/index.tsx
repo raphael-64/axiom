@@ -13,7 +13,7 @@ import { TooltipButton } from "@/components/tooltipButton";
 // import useScreenSize from "@/hooks/useScreenSize";
 import { useWindowSize } from "@uidotdev/usehooks";
 import Explorer from "./explorer";
-import { FilesResponse } from "@/lib/types";
+import { FilesResponse, Tab } from "@/lib/types";
 import { BeforeMount, Editor, Monaco, OnMount } from "@monaco-editor/react";
 import monaco from "monaco-editor";
 import { registerGeorge } from "@/lib/lang";
@@ -39,6 +39,8 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [georgeResponse, setGeorgeResponse] = useState<string>("");
+  const [openTabs, setOpenTabs] = useState<Tab[]>([]);
+  const [activeTabIndex, setActiveTabIndex] = useState<number>(-1);
 
   const toggleExplorer = () => {
     const panel = explorerRef.current;
@@ -105,6 +107,28 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  const handleFileClick = (path: string, name: string) => {
+    const existingIndex = openTabs.findIndex((tab) => tab.path === path);
+
+    if (existingIndex >= 0) {
+      setActiveTabIndex(existingIndex);
+    } else {
+      setOpenTabs([...openTabs, { path, name }]);
+      setActiveTabIndex(openTabs.length);
+    }
+  };
+
+  const handleTabClose = (indexToClose: number) => {
+    setOpenTabs((tabs) => tabs.filter((_, i) => i !== indexToClose));
+    if (indexToClose === activeTabIndex) {
+      setActiveTabIndex((prev) =>
+        indexToClose === openTabs.length - 1 ? prev - 1 : prev
+      );
+    } else if (indexToClose < activeTabIndex) {
+      setActiveTabIndex((prev) => prev - 1);
+    }
+  };
 
   if (!width) return null;
 
@@ -205,14 +229,23 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
             defaultSize={percentSizes.default}
             minSize={percentSizes.min}
           >
-            <Explorer files={files} />
+            <Explorer files={files} onFileClick={handleFileClick} />
           </ResizablePanel>
           <ResizableHandle />
           <ResizablePanel defaultSize={85}>
             <ResizablePanelGroup direction="vertical">
               <ResizablePanel defaultSize={100}>
-                <div className="flex flex-col w-full h-full">
-                  <Tabs />
+                <div
+                  className={`flex flex-col w-full h-full ${
+                    openTabs.length === 0 ? "invisible" : ""
+                  }`}
+                >
+                  <Tabs
+                    tabs={openTabs}
+                    activeTabIndex={activeTabIndex}
+                    onTabClick={setActiveTabIndex}
+                    onTabClose={handleTabClose}
+                  />
                   <Editor
                     beforeMount={handleEditorWillMount}
                     onMount={handleEditorMount}
