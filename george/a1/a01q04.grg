@@ -1,0 +1,15 @@
+#u username
+#a 01
+
+#q 04
+
+(6 marks) Is the following a valid argument or not?
+Justify your answer by using the semantics of propositional logic to 
+show the meaning of the formulas in some or all Boolean valuations.
+
+a <=> !c,
+a & !c
+|=
+!(a => c)
+
+

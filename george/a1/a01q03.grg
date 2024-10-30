@@ -1,0 +1,14 @@
+#u username
+#a 01
+
+#q 03
+
+(6 marks) Are the following formulas logically equivalent?
+
+!(c => !(a & b))
+
+!(a => (b => !c))
+
+Explain your response and demonstrate that your response is correct
+using the semantics of propositional logic.
+
