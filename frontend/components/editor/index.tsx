@@ -23,8 +23,8 @@ import { UploadModal } from "./upload";
 import Tabs from "./tabs";
 
 const sizes = {
-  min: 100,
-  default: 150,
+  min: 140,
+  default: 180,
 };
 
 export default function EditorLayout({ files }: { files: FilesResponse }) {
@@ -229,7 +229,11 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
             defaultSize={percentSizes.default}
             minSize={percentSizes.min}
           >
-            <Explorer files={files} onFileClick={handleFileClick} />
+            <Explorer
+              files={files}
+              onFileClick={handleFileClick}
+              openUpload={() => setIsUploadOpen(true)}
+            />
           </ResizablePanel>
           <ResizableHandle />
           <ResizablePanel defaultSize={85}>
