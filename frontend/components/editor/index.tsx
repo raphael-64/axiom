@@ -5,7 +5,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { PanelBottom, PanelLeft, Settings } from "lucide-react";
+import { PanelBottom, PanelLeft, Settings, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ImperativePanelHandle } from "react-resizable-panels";
 
@@ -20,6 +20,7 @@ import { registerGeorge } from "@/lib/lang";
 import SettingsModal from "./settings";
 import { askGeorge } from "@/lib/actions";
 import { UploadModal } from "./upload";
+import Tabs from "./tabs";
 
 const sizes = {
   min: 100,
@@ -155,11 +156,11 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
       <SettingsModal open={isSettingsOpen} setOpen={setIsSettingsOpen} />
       <UploadModal open={isUploadOpen} setOpen={setIsUploadOpen} />
       <div className="w-full h-full flex flex-col">
-        <div className="w-full flex items-center justify-between border-b p-1.5 px-2 text-sm">
+        <div className="w-full flex items-center justify-between border-b p-1.5 px-2">
           <div className="flex items-center gap-2">
             <div className="font-semibold">SE212</div>
             <TooltipButton
-              variant="secondary"
+              variant="default"
               size="sm"
               onClick={handleAskGeorge}
               tooltip="Ask George (⌘G)"
@@ -210,24 +211,27 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
           <ResizablePanel defaultSize={85}>
             <ResizablePanelGroup direction="vertical">
               <ResizablePanel defaultSize={100}>
-                <Editor
-                  beforeMount={handleEditorWillMount}
-                  onMount={handleEditorMount}
-                  className="w-full h-full"
-                  theme="vs-dark"
-                  options={{
-                    minimap: {
-                      enabled: false,
-                    },
-                    padding: {
-                      bottom: 4,
-                      top: 4,
-                    },
-                    scrollBeyondLastLine: false,
-                    fixedOverflowWidgets: true,
-                    // lineDecorationsWidth: 0,
-                  }}
-                />
+                <div className="flex flex-col w-full h-full">
+                  <Tabs />
+                  <Editor
+                    beforeMount={handleEditorWillMount}
+                    onMount={handleEditorMount}
+                    className="grow"
+                    theme="vs-dark"
+                    options={{
+                      minimap: {
+                        enabled: false,
+                      },
+                      padding: {
+                        bottom: 4,
+                        top: 4,
+                      },
+                      scrollBeyondLastLine: false,
+                      fixedOverflowWidgets: true,
+                      // lineDecorationsWidth: 0,
+                    }}
+                  />
+                </div>
               </ResizablePanel>
               <ResizableHandle />
               <ResizablePanel
@@ -235,7 +239,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
                 collapsible
                 defaultSize={0}
                 maxSize={80}
-                minSize={10}
+                minSize={40}
               >
                 <div
                   className={`p-4 h-full overflow-auto whitespace-pre-wrap font-mono text-sm ${
