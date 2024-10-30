@@ -15,7 +15,13 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 
-export default function Explorer({ files }: { files: FilesResponse }) {
+export default function Explorer({
+  files,
+  onFileClick,
+}: {
+  files: FilesResponse;
+  onFileClick: (path: string, name: string) => void;
+}) {
   return (
     <div className="py-2 overflow-y-auto text-sm">
       <div className="flex items-center justify-between mb-1 px-2">
@@ -32,13 +38,23 @@ export default function Explorer({ files }: { files: FilesResponse }) {
         </TooltipButton>
       </div>
       {files.map((folder) => (
-        <FolderItem key={folder.name} folder={folder} />
+        <FolderItem
+          key={folder.name}
+          folder={folder}
+          onFileClick={onFileClick}
+        />
       ))}
     </div>
   );
 }
 
-function FolderItem({ folder }: { folder: FilesResponse[0] }) {
+function FolderItem({
+  folder,
+  onFileClick,
+}: {
+  folder: FilesResponse[0];
+  onFileClick: (path: string, name: string) => void;
+}) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -54,7 +70,7 @@ function FolderItem({ folder }: { folder: FilesResponse[0] }) {
       {isOpen && (
         <>
           {folder.files.map((file) => (
-            <File key={file.path} file={file} />
+            <File key={file.path} file={file} onFileClick={onFileClick} />
           ))}
         </>
       )}
@@ -64,11 +80,13 @@ function FolderItem({ folder }: { folder: FilesResponse[0] }) {
 
 function File({
   file,
+  onFileClick,
 }: {
   file: {
     name: string;
     path: string;
   };
+  onFileClick: (path: string, name: string) => void;
 }) {
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -77,7 +95,7 @@ function File({
     <ContextMenu onOpenChange={setIsContextMenuOpen}>
       <ContextMenuTrigger asChild>
         <button
-          key={file.path}
+          onClick={() => onFileClick(file.path, file.name)}
           className={`hover:bg-muted w-full text-left pr-2 pl-7 py-0.5 relative group ${
             isContextMenuOpen || isDropdownOpen ? "bg-muted" : ""
           }`}
