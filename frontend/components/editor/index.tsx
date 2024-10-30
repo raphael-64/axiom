@@ -24,6 +24,8 @@ import Tabs from "./tabs";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 import { MonacoBinding } from "y-monaco";
+import { Socket, io } from "socket.io-client";
+import { toast } from "sonner";
 
 const sizes = {
   min: 140,
@@ -49,6 +51,9 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
   );
   const ydoc = useRef<Y.Doc>(new Y.Doc());
   const [monacoInstance, setMonacoInstance] = useState<Monaco>();
+  const [socket, setSocket] = useState<Socket>();
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>();
+  const workspaceDocsRef = useRef<Map<string, Y.Doc>>(new Map());
 
   const toggleExplorer = () => {
     const panel = explorerRef.current;
@@ -116,81 +121,147 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const handleEditorContent = (path: string) => {
+  // Initialize socket connection
+  useEffect(() => {
+    const socket = io("http://localhost:3001"); // adjust URL as needed
+
+    socket.on("connect", () => {
+      console.log("Connected to server");
+    });
+
+    socket.on("error", (error: string) => {
+      toast.error(error);
+    });
+
+    setSocket(socket);
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+  const handleEditorContent = (path: string, workspaceId?: string) => {
     if (!editorRef || !monacoInstance) return;
 
     // Clean up previous binding
     monacoBinding?.destroy();
 
-    // Get content from localStorage or initialize
-    console.log(path);
-    const content = localStorage.getItem(path) || "";
-    console.log(content);
+    if (workspaceId) {
+      // Collaborative workspace file
+      let doc = workspaceDocsRef.current.get(path);
+      if (!doc) {
+        doc = new Y.Doc();
+        workspaceDocsRef.current.set(path, doc);
+      }
 
-    // Set up new model and binding
-    const model = monacoInstance.editor.createModel(content, "george");
-    editorRef.setModel(model);
+      const ytext = doc.getText("content");
 
-    // Set up Yjs
-    const ytext = ydoc.current.getText(path);
-    const provider = new WebsocketProvider(
-      "ws://localhost:1234", // Replace with your WebSocket server URL
-      path,
-      ydoc.current
-    );
+      // Connect to room
+      socket?.emit("joinRoom", { workspaceId, path });
 
-    const binding = new MonacoBinding(
-      ytext,
-      model,
-      new Set([editorRef]),
-      provider.awareness
-    );
+      const model = monacoInstance.editor.createModel("", "george");
+      editorRef.setModel(model);
 
-    setMonacoBinding(binding);
+      const binding = new MonacoBinding(
+        ytext,
+        model,
+        new Set([editorRef]),
+        null
+      );
 
-    // Set up change listener for localStorage
-    model.onDidChangeContent(() => {
-      localStorage.setItem(path, model.getValue());
-    });
+      setMonacoBinding(binding);
+
+      // Handle updates from server
+      socket?.on(`doc-update-${path}`, (update: Uint8Array) => {
+        Y.applyUpdate(doc, update);
+      });
+
+      // Send updates to server
+      doc.on("update", (update: Uint8Array) => {
+        socket?.emit("doc-update", { workspaceId, path, update });
+      });
+    } else {
+      // Local file
+      console.log(path);
+      const content = localStorage.getItem(path) || "";
+      console.log(content);
+      const model = monacoInstance.editor.createModel(content, "george");
+      editorRef.setModel(model);
+
+      // Set up change listener for localStorage
+      model.onDidChangeContent(() => {
+        localStorage.setItem(path, model.getValue());
+      });
+    }
   };
 
-  const handleFileClick = (path: string, name: string) => {
+  const handleFileClick = (
+    path: string,
+    name: string,
+    workspaceId?: string
+  ) => {
+    // Check if trying to open file from different workspace
+    if (workspaceId && activeWorkspaceId && workspaceId !== activeWorkspaceId) {
+      toast.error("Cannot open files from different workspaces simultaneously");
+      return;
+    }
+
     const existingIndex = openTabs.findIndex((tab) => tab.path === path);
 
     if (existingIndex >= 0) {
       setActiveTabIndex(existingIndex);
     } else {
-      setOpenTabs([...openTabs, { path, name }]);
+      if (workspaceId) {
+        setActiveWorkspaceId(workspaceId);
+      }
+      setOpenTabs([...openTabs, { path, name, workspaceId }]);
       setActiveTabIndex(openTabs.length);
     }
-    handleEditorContent(path);
+    handleEditorContent(path, workspaceId);
   };
 
+  // Clean up when closing tabs
   const handleTabClose = (indexToClose: number) => {
+    const closingTab = openTabs[indexToClose];
+
     setOpenTabs((prevTabs) => {
       const newTabs = prevTabs.filter((_, i) => i !== indexToClose);
 
-      // Handle active tab updates after filtering
+      // If closing last workspace tab, clear workspace
+      if (closingTab.workspaceId) {
+        const hasOtherWorkspaceTabs = newTabs.some(
+          (tab) => tab.workspaceId === closingTab.workspaceId
+        );
+        if (!hasOtherWorkspaceTabs) {
+          setActiveWorkspaceId(undefined);
+          socket?.emit("leaveRoom", closingTab.workspaceId);
+          // Clean up workspace docs
+          workspaceDocsRef.current.delete(closingTab.path);
+        }
+      }
+
+      // Handle active tab updates
       if (indexToClose === activeTabIndex) {
-        // If closing current tab
         const newIndex =
           indexToClose === prevTabs.length - 1
             ? indexToClose - 1
             : indexToClose;
         if (newIndex >= 0 && newTabs[newIndex]) {
-          // Wait for next tick to ensure state is updated
           setTimeout(() => {
             setActiveTabIndex(newIndex);
-            handleEditorContent(newTabs[newIndex].path);
+            handleEditorContent(
+              newTabs[newIndex].path,
+              newTabs[newIndex].workspaceId
+            );
           }, 0);
         } else {
           setActiveTabIndex(-1);
         }
       } else if (indexToClose < activeTabIndex) {
-        // If closing tab before current tab
         setTimeout(() => {
           setActiveTabIndex(activeTabIndex - 1);
-          handleEditorContent(newTabs[activeTabIndex - 1].path);
+          const tab = newTabs[activeTabIndex - 1];
+          handleEditorContent(tab.path, tab.workspaceId);
         }, 0);
       }
 
@@ -198,18 +269,22 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     });
   };
 
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (activeWorkspaceId) {
+        socket?.emit("leaveRoom", activeWorkspaceId);
+      }
+      workspaceDocsRef.current.clear();
+      monacoBinding?.destroy();
+    };
+  }, []);
+
   useEffect(() => {
     if (activeTabIndex >= 0 && openTabs[activeTabIndex]) {
       handleEditorContent(openTabs[activeTabIndex].path);
     }
   }, [activeTabIndex]);
-
-  useEffect(() => {
-    return () => {
-      ydoc.current.destroy();
-      monacoBinding?.destroy();
-    };
-  }, []);
 
   if (!width) return null;
 
