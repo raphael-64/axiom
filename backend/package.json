@@ -19,7 +19,8 @@
     "socket.io": "^4.8.1"
   },
   "prisma": {
-    "schema": "prisma/schema.prisma"
+    "schema": "prisma/schema.prisma",
+    "seed": "ts-node seed.ts"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
