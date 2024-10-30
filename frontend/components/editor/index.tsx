@@ -167,18 +167,35 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
   };
 
   const handleTabClose = (indexToClose: number) => {
-    setOpenTabs((tabs) => tabs.filter((_, i) => i !== indexToClose));
-    if (indexToClose === activeTabIndex) {
-      setActiveTabIndex((prev) => {
-        if (indexToClose === openTabs.length - 1) {
-          return prev - 1;
+    setOpenTabs((prevTabs) => {
+      const newTabs = prevTabs.filter((_, i) => i !== indexToClose);
+
+      // Handle active tab updates after filtering
+      if (indexToClose === activeTabIndex) {
+        // If closing current tab
+        const newIndex =
+          indexToClose === prevTabs.length - 1
+            ? indexToClose - 1
+            : indexToClose;
+        if (newIndex >= 0 && newTabs[newIndex]) {
+          // Wait for next tick to ensure state is updated
+          setTimeout(() => {
+            setActiveTabIndex(newIndex);
+            handleEditorContent(newTabs[newIndex].path);
+          }, 0);
+        } else {
+          setActiveTabIndex(-1);
         }
-        handleEditorContent(openTabs[prev].path);
-        return prev;
-      });
-    } else if (indexToClose < activeTabIndex) {
-      setActiveTabIndex((prev) => prev - 1);
-    }
+      } else if (indexToClose < activeTabIndex) {
+        // If closing tab before current tab
+        setTimeout(() => {
+          setActiveTabIndex(activeTabIndex - 1);
+          handleEditorContent(newTabs[activeTabIndex - 1].path);
+        }, 0);
+      }
+
+      return newTabs;
+    });
   };
 
   useEffect(() => {

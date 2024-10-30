@@ -59,6 +59,7 @@ export default function Explorer({
             </div>
             <TooltipButton
               variant="ghost"
+              disabled={files.length === 0}
               size="xsIcon"
               className="!text-muted-foreground"
               tooltip="Upload File (⌘U)"
@@ -96,7 +97,7 @@ export default function Explorer({
               <PopoverContent side="right" className="w-48">
                 <Select>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Group" />
+                    <SelectValue placeholder="Select Folder" />
                   </SelectTrigger>
                   <SelectContent>
                     {files.map((option) => (
@@ -107,7 +108,7 @@ export default function Explorer({
                   </SelectContent>
                 </Select>
                 <Button className="w-full mt-2" size="sm" variant="secondary">
-                  <Plus className="!size-3" /> Create
+                  <Plus className="!size-3" /> Create Workspace
                 </Button>
               </PopoverContent>
             </Popover>
