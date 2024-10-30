@@ -1,0 +1,20 @@
+#u username1 username2
+#a 02
+
+#q 03
+
+Determine whether the following argument is valid 
+or invalid.  If it is valid, prove its validity 
+using natural deduction.  If it is invalid, provide 
+a counterexample and use it to demonstrate that 
+the argument is invalid.
+
+!a & !q,
+a | b,
+c => !b,
+!c <=> e,
+!e
+|-
+q | !c
+
+

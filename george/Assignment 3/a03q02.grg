@@ -1,0 +1,14 @@
+#u username1 username2
+#a 03
+
+#q 02
+
+Determine whether the following set of formulas 
+is consistent or not.  
+If it is inconsistent, prove it is inconsistent using 
+semantic tableaux.  If it is consistent, use the semantics of
+propositional logic to show that it is consistent and demonstrate
+that your answer is correct.
+
+{!a | !b => c, !(c | a & b)}
+
