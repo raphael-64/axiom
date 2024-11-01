@@ -1,5 +1,8 @@
 import { Server, Socket } from "socket.io";
 import * as Y from "yjs";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 interface WorkspaceDoc {
   doc: Y.Doc;
@@ -10,10 +13,11 @@ interface WorkspaceDoc {
 const workspaces = new Map<string, Map<string, WorkspaceDoc>>();
 
 export const handleConnection = (io: Server) => {
-  io.on("connection", (socket: Socket) => {
+  io.on("connection", async (socket: Socket) => {
     const userId = socket.handshake.auth.userId;
-    if (!userId) {
-      socket.emit("error", "No user ID provided");
+
+    if (!await checkUserIdInDatabase(userId)) {
+      socket.emit("error", "Invalid user ID provided");
       socket.disconnect();
       return;
     }
@@ -104,3 +108,11 @@ export const handleConnection = (io: Server) => {
     });
   });
 };
+
+// Mock function to simulate database check
+async function checkUserIdInDatabase(userId: string): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+  return user !== null;
+}
