@@ -78,48 +78,25 @@ export const handleConnection = (io: Server) => {
       socket.to(roomId).emit(`doc-update-${path}`, update);
     });
 
-    socket.on("leaveRoom", (workspaceId: string) => {
-      const workspace = workspaces.get(workspaceId);
-      if (!workspace) return;
-
-      // Remove client from all docs in workspace
-      for (const [path, docData] of workspace.entries()) {
-        if (docData.clients.has(socket.id)) {
-          const roomId = `${workspaceId}:${path}`;
-          socket.to(roomId).emit("user-left", {
-            userId,
-            path,
-          });
-          docData.clients.delete(socket.id);
-        }
-
-        // Clean up doc if no clients left
-        if (docData.clients.size === 0) {
-          workspace.delete(path);
-        }
-      }
-
-      // Clean up workspace if empty
-      if (workspace.size === 0) {
-        workspaces.delete(workspaceId);
-      }
-    });
-
     socket.on("disconnect", () => {
-      // Clean up client from all workspaces
-      for (const workspace of workspaces.values()) {
+      // Find and clean up the workspace/doc this socket was connected to
+      for (const [workspaceId, workspace] of workspaces.entries()) {
         for (const [path, docData] of workspace.entries()) {
           if (docData.clients.has(socket.id)) {
+            const roomId = `${workspaceId}:${path}`;
+            socket.to(roomId).emit("user-left", {
+              userId,
+              path,
+            });
             docData.clients.delete(socket.id);
+
+            // Clean up doc if no clients left
             if (docData.clients.size === 0) {
               workspace.delete(path);
             }
           }
         }
-      }
-
-      // Clean up empty workspaces
-      for (const [workspaceId, workspace] of workspaces.entries()) {
+        // Clean up workspace if empty
         if (workspace.size === 0) {
           workspaces.delete(workspaceId);
         }

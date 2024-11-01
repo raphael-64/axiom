@@ -231,15 +231,14 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     setOpenTabs((prevTabs) => {
       const newTabs = prevTabs.filter((_, i) => i !== indexToClose);
 
-      // If closing last workspace tab, clear workspace
+      // If closing last workspace tab, clean up workspace
       if (closingTab.workspaceId) {
         const hasOtherWorkspaceTabs = newTabs.some(
           (tab) => tab.workspaceId === closingTab.workspaceId
         );
         if (!hasOtherWorkspaceTabs) {
           setActiveWorkspaceId(undefined);
-          socket?.emit("leaveRoom", closingTab.workspaceId);
-          // Clean up workspace docs
+          socket?.disconnect();
           workspaceDocsRef.current.delete(closingTab.path);
         }
       }
@@ -276,8 +275,8 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
   // Clean up on unmount
   useEffect(() => {
     return () => {
-      if (activeWorkspaceId) {
-        socket?.emit("leaveRoom", activeWorkspaceId);
+      if (socket?.connected) {
+        socket.disconnect();
       }
       workspaceDocsRef.current.clear();
       monacoBinding?.destroy();
