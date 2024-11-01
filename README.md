@@ -7,9 +7,9 @@ An editor for George, for [SE212 (Logic and Computation](https://student.cs.uwat
 - Keyboard shortcuts for all major features
 - Multiplayer collaboration with workspaces
 
-# Running Locally
+## Running Locally
 
-## Frontend
+### Frontend
 
 We use Next.js 14 + Typescript, as well as these libraries:
 - Monaco editor
@@ -33,7 +33,7 @@ npm i
 npm run dev
 ```
 
-## Backend
+### Backend
 
 We use a Typescript + Express + Node.js server for our HTTP and WebSockets server. We also use Y.js and Socket.io.
 
@@ -51,7 +51,7 @@ npm i
 npm run dev
 ```
 
-### Prisma
+#### Prisma
 
 1. Compile the Prisma Schema
 
