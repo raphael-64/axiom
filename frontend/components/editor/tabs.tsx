@@ -17,7 +17,7 @@ export default function Tabs({
   onTabClose,
 }: TabsProps) {
   return (
-    <div className="w-full h-10 bg-tabs-bg shrink-0 flex overflow-x-auto">
+    <div className="w-full h-10 bg-tabs-bg shrink-0 flex overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       {tabs.map((tab, index) => (
         <TabComponent
           key={tab.path}
@@ -80,8 +80,8 @@ function TabComponent({
         </div>
       ) : tab.workspaceId ? (
         <div className="relative size-5 p-1 flex items-center justify-center">
-          <div className="rounded-full w-2 h-2 bg-green-500" />
           <div className="rounded-full size-2 absolute animate-ping bg-green-500 opacity-75" />
+          <div className="rounded-full size-2 bg-green-500" />
         </div>
       ) : (
         <div className="size-5" />

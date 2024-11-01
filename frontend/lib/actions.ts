@@ -19,7 +19,9 @@ WORKSPACE ACTIONS
 */
 
 export async function getWorkspaces(userId: string) {
-  const response = await fetch(`/api/workspaces?userId=${userId}`);
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/workspaces?userId=${userId}`
+  );
   const data = await response.json();
 
   return {
@@ -30,10 +32,13 @@ export async function getWorkspaces(userId: string) {
 }
 
 export async function createWorkspace(userId: string) {
-  const response = await fetch("/api/workspaces", {
-    method: "PUT",
-    body: JSON.stringify({ userId }),
-  });
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/workspaces`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ userId }),
+    }
+  );
   const data = await response.json();
 
   return {
@@ -44,10 +49,13 @@ export async function createWorkspace(userId: string) {
 }
 
 export async function deleteWorkspace(workspaceId: string) {
-  const response = await fetch("/api/workspaces", {
-    method: "DELETE",
-    body: JSON.stringify({ workspaceId }),
-  });
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/workspaces`,
+    {
+      method: "DELETE",
+      body: JSON.stringify({ workspaceId }),
+    }
+  );
   const data = await response.json();
 
   return {
@@ -57,10 +65,13 @@ export async function deleteWorkspace(workspaceId: string) {
 }
 
 export async function inviteToWorkspace(userId: string, workspaceId: string) {
-  const response = await fetch("/api/workspaces/invite", {
-    method: "POST",
-    body: JSON.stringify({ userId, workspaceId }),
-  });
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/workspaces/invite`,
+    {
+      method: "POST",
+      body: JSON.stringify({ userId, workspaceId }),
+    }
+  );
   const data = await response.json();
 
   return {
@@ -71,10 +82,13 @@ export async function inviteToWorkspace(userId: string, workspaceId: string) {
 }
 
 export async function respondToInvite(inviteId: string, accept: boolean) {
-  const response = await fetch("/api/workspaces/invite/accept", {
-    method: "POST",
-    body: JSON.stringify({ inviteId, accept }),
-  });
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/workspaces/invite/accept`,
+    {
+      method: "POST",
+      body: JSON.stringify({ inviteId, accept }),
+    }
+  );
   const data = await response.json();
 
   return {
@@ -86,10 +100,13 @@ export async function respondToInvite(inviteId: string, accept: boolean) {
 }
 
 export async function deleteInvite(inviteId: string) {
-  const response = await fetch("/api/workspaces/invite", {
-    method: "DELETE",
-    body: JSON.stringify({ inviteId }),
-  });
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/workspaces/invite`,
+    {
+      method: "DELETE",
+      body: JSON.stringify({ inviteId }),
+    }
+  );
   const data = await response.json();
 
   return {
@@ -98,10 +115,13 @@ export async function deleteInvite(inviteId: string) {
   };
 }
 export async function removeCollaborator(userId: string, workspaceId: string) {
-  const response = await fetch("/api/workspaces/collaborator", {
-    method: "DELETE",
-    body: JSON.stringify({ userId, workspaceId }),
-  });
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/workspaces/collaborator`,
+    {
+      method: "DELETE",
+      body: JSON.stringify({ userId, workspaceId }),
+    }
+  );
   const data = await response.json();
 
   return {

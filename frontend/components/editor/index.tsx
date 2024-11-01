@@ -220,7 +220,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
   ) => {
     // Check if trying to open file from different workspace
     if (workspaceId && activeWorkspaceId && workspaceId !== activeWorkspaceId) {
-      toast.error("Cannot open files from different workspaces simultaneously");
+      toast.error("Another workspace is already open.");
       return;
     }
 

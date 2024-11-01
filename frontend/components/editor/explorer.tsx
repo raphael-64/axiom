@@ -71,7 +71,7 @@ export default function Explorer({
   userId,
 }: {
   files: FilesResponse;
-  onFileClick: (path: string, name: string) => void;
+  onFileClick: (path: string, name: string, workspaceId?: string) => void;
   openUpload: () => void;
   openAccess: (workspaceId: string) => void;
   userId: string;
@@ -173,7 +173,7 @@ export default function Explorer({
               key={folder.name}
               folder={folder}
               onFileClick={onFileClick}
-              isWorkspace
+              workspaceId={folder.name}
               openAccess={openAccess}
             />
           ))}
@@ -186,12 +186,12 @@ export default function Explorer({
 function FolderItem({
   folder,
   onFileClick,
-  isWorkspace,
+  workspaceId,
   openAccess,
 }: {
   folder: FilesResponse[0];
-  onFileClick: (path: string, name: string) => void;
-  isWorkspace?: boolean;
+  onFileClick: (path: string, name: string, workspaceId?: string) => void;
+  workspaceId?: string;
   openAccess?: (workspaceId: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -201,7 +201,7 @@ function FolderItem({
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         className={`flex items-center gap-1 hover:bg-muted w-full px-2 h-6 relative ${
-          isWorkspace ? "group/workspace" : ""
+          workspaceId ? "group/workspace" : ""
         }`}
       >
         <span className="w-4 text-xs">{isOpen ? "▼" : "▶"}</span>
@@ -210,7 +210,7 @@ function FolderItem({
           tabIndex={0}
           onClick={(e) => {
             e.stopPropagation();
-            if (isWorkspace) openAccess?.(folder.name);
+            if (workspaceId) openAccess?.(workspaceId);
           }}
           className={`absolute right-0 top-0 h-6 w-6 flex group-hover/workspace:visible invisible items-center justify-center`}
         >
@@ -221,7 +221,12 @@ function FolderItem({
       {isOpen && (
         <>
           {folder.files.map((file) => (
-            <File key={file.path} file={file} onFileClick={onFileClick} />
+            <File
+              key={file.path}
+              file={file}
+              onFileClick={onFileClick}
+              workspaceId={workspaceId}
+            />
           ))}
         </>
       )}
@@ -232,12 +237,14 @@ function FolderItem({
 function File({
   file,
   onFileClick,
+  workspaceId,
 }: {
   file: {
     name: string;
     path: string;
   };
-  onFileClick: (path: string, name: string) => void;
+  onFileClick: (path: string, name: string, workspaceId?: string) => void;
+  workspaceId?: string;
 }) {
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -246,7 +253,7 @@ function File({
     <ContextMenu onOpenChange={setIsContextMenuOpen}>
       <ContextMenuTrigger asChild>
         <button
-          onClick={() => onFileClick(file.path, file.name)}
+          onClick={() => onFileClick(file.path, file.name, workspaceId)}
           className={`hover:bg-muted w-full text-left pr-2 pl-7 py-0.5 relative group/file ${
             isContextMenuOpen || isDropdownOpen ? "bg-muted" : ""
           }`}
