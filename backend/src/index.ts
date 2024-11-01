@@ -53,7 +53,7 @@ const getFiles = async () => {
 
 const getFile = async (filename: string) => {
   const file = await fetch(
-    `https://student.cs.uwaterloo.ca/~se212/${filename}`
+    `https://student.cs.uwaterloo.ca/~se212${filename}`
   );
   return await file.json();
 };
@@ -84,7 +84,7 @@ app.put("/api/workspaces", async (req: Request, res: Response) => {
     const workspace = await createNewWorkspace(userId, "New Project");
 
     //Ian's code below, need to finish
-    /* const assignmentId: string = req.params.assignmentId;
+    const assignmentId: string = req.params.assignmentId;
     const files_map = await getFiles(); // Await the result of getFiles
     res.send(files_map);
     let files: File[] = [];
@@ -98,16 +98,19 @@ app.put("/api/workspaces", async (req: Request, res: Response) => {
     let loaded_files = [];
     if (files) {
       if (load_files_locally) {
-        files.forEach((file: File) => {});
-      } else {
         files.forEach((file: File) => {
           let filename = file.name;
-          let filepath = file.path;
-          let fileContent = await getFile(filepath);
-          // continue from here next tiem
+          let filepath = `../..${file.path}`;
+        });
+      } else {
+        files.forEach((file: File) => {
+          // Loading files from remote, can't do that at the moment
+          // let filename = file.name;
+          // let filepath = file.path;
+          // let fileContent = await getFile(filepath);
         });
       }
-    } */
+    }
 
     res.json({ workspaceId: workspace.id });
   } catch (error) {
