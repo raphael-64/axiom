@@ -1,17 +1,28 @@
 # SE212 Interface
 
 An editor for George, for [SE212 (Logic and Computation](https://student.cs.uwaterloo.ca/~se212/notes.html) at the University of Waterloo.
+
 - Local assignment and project files, persisted in local storage
 - Tabs for opening multiple files
 - Fully customizable layout with collapsible and resizeable panels
 - Keyboard shortcuts for all major features
 - Multiplayer collaboration with workspaces
+- VSCode-like editor features and shortcuts (we use the same editor library as VSCode)
+- Intelligent language support
+  - Auto-closing braces and indentations
+  - Todo: Comments
+  - Line numbers
+    - Incrementing and decrementing numbers
+    - Remove empty lines with line numbers with `Enter`
+    - Todo: Cuts off above and below at `#check x`
+    - Todo: Auto-updating rule references
 
 ## Running Locally
 
 ### Frontend
 
 We use Next.js 14 + Typescript, as well as these libraries:
+
 - Monaco editor
 - Y.js
 - Socket.io

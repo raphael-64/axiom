@@ -27,12 +27,18 @@ export const registerGeorge: OnMount = (editor, monaco) => {
         },
       },
     ],
+    comments: {
+      lineComment: "//",
+    },
   });
 
   // Define syntax highlighting rules
   monaco.languages.setMonarchTokensProvider("george", {
     tokenizer: {
       root: [
+        // Comments - must be before other rules to take precedence
+        [/\/\/.*$/, "comment"],
+
         // Source constants (#q, #u, #a)
         [/#[qua]/, "constant.other"],
 
