@@ -1,5 +1,3 @@
-"use server";
-
 const askGeorgeUrl =
   "https://student.cs.uwaterloo.ca/~se212/george/ask-george/cgi-bin/george.cgi/check";
 
