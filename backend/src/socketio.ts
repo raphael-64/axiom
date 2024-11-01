@@ -2,6 +2,7 @@ import { Server, Socket } from "socket.io";
 import * as Y from "yjs";
 
 import prisma from "./prisma";
+import { debouncedUpdateFile } from "@utils/utils";
 
 interface WorkspaceDoc {
   doc: Y.Doc;

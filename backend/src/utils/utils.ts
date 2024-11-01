@@ -1,5 +1,4 @@
 import prisma from "../prisma";
-import debounce from "lodash/debounce";
 
 // src/utils.ts
 export const greet = (name: string): string => {
@@ -105,6 +104,18 @@ export async function updateFileContent(
       content,
     },
   });
+}
+
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout;
+
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
 }
 
 export const debouncedUpdateFile = debounce(
