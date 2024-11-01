@@ -1,33 +1,41 @@
 "use client";
 
+// React and hooks
+import { useEffect, useRef, useState } from "react";
+import { useWindowSize } from "@uidotdev/usehooks";
+
+// Monaco editor
 import monaco from "monaco-editor";
+import { BeforeMount, Editor, Monaco, OnMount } from "@monaco-editor/react";
+import { MonacoBinding } from "y-monaco";
+
+// UI Components
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import { TooltipButton } from "@/components/tooltip-button";
+import { Input } from "@/components/ui/input";
 import { PanelBottom, PanelLeft, Settings, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { ImperativePanelHandle } from "react-resizable-panels";
 
-import { TooltipButton } from "@/components/tooltipButton";
-// import useScreenSize from "@/hooks/useScreenSize";
-import { useWindowSize } from "@uidotdev/usehooks";
+// Local components
 import Explorer from "./explorer";
-import { FilesResponse, Tab } from "@/lib/types";
-import { BeforeMount, Editor, Monaco, OnMount } from "@monaco-editor/react";
-import { registerGeorge } from "@/lib/lang";
 import SettingsModal from "./settings";
-import { askGeorge } from "@/lib/actions";
 import { UploadModal } from "./upload";
 import Tabs from "./tabs";
-import * as Y from "yjs";
-import { WebsocketProvider } from "y-websocket";
-import { MonacoBinding } from "y-monaco";
-import { Socket, io } from "socket.io-client";
-import { toast } from "sonner";
 import ManageAccessModal from "./access";
-import { Input } from "../ui/input";
+
+// Types and utilities
+import { FilesResponse, Tab } from "@/lib/types";
+import { registerGeorge } from "@/lib/lang";
+import { askGeorge } from "@/lib/actions";
+import { ImperativePanelHandle } from "react-resizable-panels";
+import { toast } from "sonner";
+
+// Collaboration
+import * as Y from "yjs";
+import { Socket, io } from "socket.io-client";
 
 const sizes = {
   min: 140,
