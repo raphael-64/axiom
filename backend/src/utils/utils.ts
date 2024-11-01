@@ -1,6 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import prisma from "../prisma";
 import debounce from "lodash/debounce";
-const prisma = new PrismaClient();
 
 // src/utils.ts
 export const greet = (name: string): string => {

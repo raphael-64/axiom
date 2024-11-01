@@ -1,24 +1,22 @@
 import { Server, Socket } from "socket.io";
 import * as Y from "yjs";
-import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
-import { debouncedUpdateFile } from "./utils/utils";
+import prisma from "./prisma";
 
 interface WorkspaceDoc {
   doc: Y.Doc;
-  clients: Map<string, string>; // socketId -> userId
+  clients: Map<string, string>;
 }
 
-// Store active workspaces and their documents
 const workspaces = new Map<string, Map<string, WorkspaceDoc>>();
 
 export const handleConnection = (io: Server) => {
   io.on("connection", async (socket: Socket) => {
     const userId = socket.handshake.auth.userId;
+    const workspaceId = socket.handshake.auth.workspaceId;
 
-    if (!(await checkUserIdInDatabase(userId))) {
-      socket.emit("error", "Invalid user ID provided");
+    if (!(await checkUserAccess(userId, workspaceId))) {
+      socket.emit("error", "Unauthorized access to workspace");
       socket.disconnect();
       return;
     }
@@ -29,14 +27,12 @@ export const handleConnection = (io: Server) => {
       const roomId = `${workspaceId}:${path}`;
       socket.join(roomId);
 
-      // Initialize workspace if needed
       if (!workspaces.has(workspaceId)) {
         workspaces.set(workspaceId, new Map());
       }
 
       const workspace = workspaces.get(workspaceId)!;
 
-      // Initialize document if needed
       if (!workspace.has(path)) {
         workspace.set(path, {
           doc: new Y.Doc(),
@@ -114,10 +110,19 @@ export const handleConnection = (io: Server) => {
   });
 };
 
-// Mock function to simulate database check
-async function checkUserIdInDatabase(userId: string): Promise<boolean> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
+async function checkUserAccess(
+  userId: string,
+  workspaceId: string
+): Promise<boolean> {
+  const workspace = await prisma.workspace.findFirst({
+    where: {
+      id: workspaceId,
+      users: {
+        some: {
+          id: userId,
+        },
+      },
+    },
   });
-  return user !== null;
+  return workspace !== null;
 }
