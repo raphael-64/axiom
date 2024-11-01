@@ -59,7 +59,9 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
   const workspaceDocsRef = useRef<Map<string, Y.Doc>>(new Map());
 
   const randomId = Math.floor(Math.random() * 900000 + 100000);
-  const [tempUserId, setTempUserId] = useState<string>(`watiam_${randomId}`);
+  const [tempUserId, setTempUserId] = useState<string>(
+    `test_watiam_${randomId}`
+  );
 
   const toggleExplorer = () => {
     const panel = explorerRef.current;

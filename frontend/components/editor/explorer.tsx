@@ -1,6 +1,6 @@
 import { FilesResponse } from "@/lib/types";
 import { useState } from "react";
-import { TooltipButton } from "../tooltipButton";
+import { TooltipButton } from "@/components/tooltip-button";
 import {
   Download,
   Files,
@@ -26,13 +26,13 @@ import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "../ui/resizable";
+} from "@/components/ui/resizable";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -40,6 +40,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { createWorkspace } from "@/lib/actions";
+import { toast } from "sonner";
 
 const testWorkspaces: FilesResponse = [
   {
@@ -67,13 +69,26 @@ export default function Explorer({
   onFileClick,
   openUpload,
   openAccess,
+  userId,
 }: {
   files: FilesResponse;
   onFileClick: (path: string, name: string) => void;
   openUpload: () => void;
   openAccess: (workspaceId: string) => void;
+  userId: string;
 }) {
-  const handleCreateWorkspace = () => {};
+  const [createWorkspaceFolder, setCreateWorkspaceFolder] =
+    useState<string>("");
+
+  const handleCreateWorkspace = async () => {
+    const { success, message, workspaceId } = await createWorkspace(userId);
+
+    if (success) {
+      toast.success(message);
+    } else {
+      toast.error(message);
+    }
+  };
 
   return (
     <ResizablePanelGroup direction="vertical">
@@ -121,7 +136,10 @@ export default function Explorer({
                 </Button>
               </PopoverTrigger>
               <PopoverContent side="right" className="w-48">
-                <Select>
+                <Select
+                  value={createWorkspaceFolder}
+                  onValueChange={(value) => setCreateWorkspaceFolder(value)}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select Folder" />
                   </SelectTrigger>
@@ -135,6 +153,7 @@ export default function Explorer({
                 </Select>
                 <Button
                   onClick={handleCreateWorkspace}
+                  disabled={!createWorkspaceFolder}
                   className="w-full mt-2"
                   size="sm"
                   variant="secondary"
