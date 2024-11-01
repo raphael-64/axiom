@@ -35,7 +35,11 @@ npm run dev
 
 ### Backend
 
-We use a Typescript + Express + Node.js server for our HTTP and WebSockets server. We also use Y.js and Socket.io.
+We use a Typescript + Express + Node.js server for our HTTP and WebSockets server, as well as these libraries:
+
+- Socket.io
+- Y.js
+- Prisma
 
 Set up environment variables in `backend/.env`:
 
