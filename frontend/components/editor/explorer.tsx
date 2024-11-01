@@ -3,7 +3,6 @@ import { useState } from "react";
 import { TooltipButton } from "@/components/tooltip-button";
 import {
   Download,
-  Files,
   MoreHorizontal,
   Plus,
   RotateCw,
@@ -40,7 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createWorkspace } from "@/lib/actions";
+import { useWorkspaces, useCreateWorkspace } from "@/lib/query";
 import { toast } from "sonner";
 
 const testWorkspaces: FilesResponse = [
@@ -79,16 +78,8 @@ export default function Explorer({
 }) {
   const [createWorkspaceFolder, setCreateWorkspaceFolder] =
     useState<string>("");
-
-  const handleCreateWorkspace = async () => {
-    const { success, message, workspaceId } = await createWorkspace(userId);
-
-    if (success) {
-      toast.success(message);
-    } else {
-      toast.error(message);
-    }
-  };
+  const { data: workspacesData } = useWorkspaces(userId);
+  const createWorkspaceMutation = useCreateWorkspace();
 
   return (
     <ResizablePanelGroup direction="vertical">
@@ -152,7 +143,20 @@ export default function Explorer({
                   </SelectContent>
                 </Select>
                 <Button
-                  onClick={handleCreateWorkspace}
+                  onClick={() => {
+                    createWorkspaceMutation.mutate(userId, {
+                      onSuccess: (data) => {
+                        if (data.success) {
+                          toast.success(data.message);
+                        } else {
+                          toast.error(data.message);
+                        }
+                      },
+                      onError: () => {
+                        toast.error("Failed to create workspace");
+                      },
+                    });
+                  }}
                   disabled={!createWorkspaceFolder}
                   className="w-full mt-2"
                   size="sm"
@@ -163,7 +167,8 @@ export default function Explorer({
               </PopoverContent>
             </Popover>
           </div>
-          {testWorkspaces.map((folder) => (
+          {testWorkspaces.map((folder: FilesResponse[0]) => (
+            // {workspacesData?.workspaces?.map((folder) => (
             <FolderItem
               key={folder.name}
               folder={folder}
