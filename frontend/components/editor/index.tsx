@@ -125,7 +125,11 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
 
   // Initialize socket connection
   useEffect(() => {
-    const socket = io("http://localhost:3001"); // adjust URL as needed
+    const socket = io("http://localhost:3001", {
+      auth: {
+        userId: "user-id-here", // Get this from your auth system
+      },
+    });
 
     socket.on("connect", () => {
       console.log("Connected to server");

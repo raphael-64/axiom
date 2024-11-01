@@ -1,15 +1,24 @@
 import { Server, Socket } from "socket.io";
 import * as Y from "yjs";
 
+interface WorkspaceDoc {
+  doc: Y.Doc;
+  clients: Map<string, string>; // socketId -> userId
+}
+
 // Store active workspaces and their documents
-const workspaces = new Map<
-  string,
-  Map<string, { doc: Y.Doc; clients: Set<string> }>
->();
+const workspaces = new Map<string, Map<string, WorkspaceDoc>>();
 
 export const handleConnection = (io: Server) => {
   io.on("connection", (socket: Socket) => {
-    console.log(`New connection: ${socket.id}`);
+    const userId = socket.handshake.auth.userId;
+    if (!userId) {
+      socket.emit("error", "No user ID provided");
+      socket.disconnect();
+      return;
+    }
+
+    console.log(`New connection: ${socket.id} (User: ${userId})`);
 
     socket.on("joinRoom", ({ workspaceId, path }) => {
       const roomId = `${workspaceId}:${path}`;
@@ -26,18 +35,24 @@ export const handleConnection = (io: Server) => {
       if (!workspace.has(path)) {
         workspace.set(path, {
           doc: new Y.Doc(),
-          clients: new Set(),
+          clients: new Map(),
         });
       }
 
       const docData = workspace.get(path)!;
-      docData.clients.add(socket.id);
+      docData.clients.set(socket.id, userId);
 
       // Send current document state to new client
       const update = Y.encodeStateAsUpdate(docData.doc);
       socket.emit("sync", {
         path,
         update: Buffer.from(update).toString("base64"),
+      });
+
+      // Notify others that user joined
+      socket.to(roomId).emit("user-joined", {
+        userId,
+        path,
       });
     });
 
@@ -47,6 +62,12 @@ export const handleConnection = (io: Server) => {
 
       const docData = workspace.get(path);
       if (!docData) return;
+
+      // Verify user is in workspace
+      if (!docData.clients.has(socket.id)) {
+        socket.emit("error", "Not authorized to edit this document");
+        return;
+      }
 
       // Apply update to server's doc
       const binaryUpdate = Buffer.from(update, "base64");
@@ -63,7 +84,14 @@ export const handleConnection = (io: Server) => {
 
       // Remove client from all docs in workspace
       for (const [path, docData] of workspace.entries()) {
-        docData.clients.delete(socket.id);
+        if (docData.clients.has(socket.id)) {
+          const roomId = `${workspaceId}:${path}`;
+          socket.to(roomId).emit("user-left", {
+            userId,
+            path,
+          });
+          docData.clients.delete(socket.id);
+        }
 
         // Clean up doc if no clients left
         if (docData.clients.size === 0) {
@@ -81,9 +109,11 @@ export const handleConnection = (io: Server) => {
       // Clean up client from all workspaces
       for (const workspace of workspaces.values()) {
         for (const [path, docData] of workspace.entries()) {
-          docData.clients.delete(socket.id);
-          if (docData.clients.size === 0) {
-            workspace.delete(path);
+          if (docData.clients.has(socket.id)) {
+            docData.clients.delete(socket.id);
+            if (docData.clients.size === 0) {
+              workspace.delete(path);
+            }
           }
         }
       }
