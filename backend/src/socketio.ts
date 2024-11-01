@@ -4,12 +4,12 @@ import * as Y from "yjs";
 import prisma from "./prisma";
 import { debouncedUpdateFile } from "@utils/utils";
 
-interface WorkspaceDoc {
-  doc: Y.Doc;
+interface Workspace {
+  doc: Map<string, Y.Doc>;
   clients: Map<string, string>;
 }
 
-const workspaces = new Map<string, Map<string, WorkspaceDoc>>();
+const workspaces = new Map<string, Workspace>();
 
 export const handleConnection = (io: Server) => {
   io.on("connection", async (socket: Socket) => {
@@ -24,28 +24,25 @@ export const handleConnection = (io: Server) => {
 
     console.log(`New connection: ${socket.id} (User: ${userId})`);
 
+    if (!workspaces.has(workspaceId)) {
+      workspaces.set(workspaceId, { doc: new Map(), clients: new Map() });
+    }
+
+    const workspace = workspaces.get(workspaceId)!;
+    workspace.clients.set(socket.id, userId);
+
     socket.on("joinRoom", ({ workspaceId, path }) => {
       const roomId = `${workspaceId}:${path}`;
       socket.join(roomId);
 
-      if (!workspaces.has(workspaceId)) {
-        workspaces.set(workspaceId, new Map());
+      if (!workspace.doc.has(path)) {
+        workspace.doc.set(path, new Y.Doc());
       }
 
-      const workspace = workspaces.get(workspaceId)!;
-
-      if (!workspace.has(path)) {
-        workspace.set(path, {
-          doc: new Y.Doc(),
-          clients: new Map(),
-        });
-      }
-
-      const docData = workspace.get(path)!;
-      docData.clients.set(socket.id, userId);
+      const docData = workspace.doc.get(path)!;
 
       // Send current document state to new client
-      const update = Y.encodeStateAsUpdate(docData.doc);
+      const update = Y.encodeStateAsUpdate(docData);
       socket.emit("sync", {
         path,
         update: Buffer.from(update).toString("base64"),
@@ -59,60 +56,39 @@ export const handleConnection = (io: Server) => {
     });
 
     socket.on("doc-update", ({ workspaceId, path, update }) => {
-      const workspace = workspaces.get(workspaceId);
       if (!workspace) return;
 
-      const docData = workspace.get(path);
+      const docData = workspace.doc.get(path);
       if (!docData) return;
 
-      // Verify user is in workspace
-      if (!docData.clients.has(socket.id)) {
-        socket.emit("error", "Not authorized to edit this document");
-        return;
-      }
-
-      // Apply update to server's doc
       const binaryUpdate = Buffer.from(update, "base64");
-      Y.applyUpdate(docData.doc, binaryUpdate);
+      Y.applyUpdate(docData, binaryUpdate);
 
-      // Get the current content and debounce DB update
-      const content = docData.doc.getText("content").toString();
+      const content = docData.getText("content").toString();
       debouncedUpdateFile(workspaceId, path, content);
 
-      // Broadcast to all other clients in same file
       const roomId = `${workspaceId}:${path}`;
       socket.to(roomId).emit(`doc-update-${path}`, update);
     });
 
-    socket.on("disconnect", () => {
-      const workspaceId = socket.handshake.auth.workspaceId;
-      const workspace = workspaces.get(workspaceId);
-      if (!workspace) return;
+    socket.on("disconnect", async () => {
+      if (workspace) {
+        workspace.clients.delete(socket.id);
+        
+        socket.to(workspaceId).emit("user-left", {
+          userId,
+        });
 
-      for (const [path, docData] of workspace.entries()) {
-        if (docData.clients.has(socket.id)) {
-          const roomId = `${workspaceId}:${path}`;
-          socket.to(roomId).emit("user-left", {
-            userId,
-            path,
+        if (workspace.clients.size === 0) {
+          workspace.doc.forEach((doc, path) => {
+            workspace.doc.delete(path);
           });
-          docData.clients.delete(socket.id);
-
-          const saveOnLeave = true;
-          if (saveOnLeave) {
-            const content = docData.doc.getText("content").toString();
-            debouncedUpdateFile(workspaceId, path, content);
-          }
-
-          if (docData.clients.size === 0) {
-            workspace.delete(path);
-          }
-          break;
+          
+          workspaces.delete(workspaceId);
+          await prisma.workspace.delete({
+            where: { id: workspaceId },
+          });
         }
-      }
-
-      if (workspace.size === 0) {
-        workspaces.delete(workspaceId);
       }
     });
   });
