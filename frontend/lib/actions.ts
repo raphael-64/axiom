@@ -18,8 +18,8 @@ export async function askGeorge(body: string) {
 WORKSPACE ACTIONS
 */
 
-export async function getWorkspaces() {
-  const response = await fetch("/api/workspaces");
+export async function getWorkspaces(userId: string) {
+  const response = await fetch(`/api/workspaces?userId=${userId}`);
   const data = await response.json();
 
   return {
@@ -29,9 +29,10 @@ export async function getWorkspaces() {
   };
 }
 
-export async function createWorkspace() {
+export async function createWorkspace(userId: string) {
   const response = await fetch("/api/workspaces", {
     method: "PUT",
+    body: JSON.stringify({ userId }),
   });
   const data = await response.json();
 
@@ -55,10 +56,10 @@ export async function deleteWorkspace(workspaceId: string) {
   };
 }
 
-export async function inviteToWorkspace(userId: string) {
+export async function inviteToWorkspace(userId: string, workspaceId: string) {
   const response = await fetch("/api/workspaces/invite", {
     method: "POST",
-    body: JSON.stringify({ userId }),
+    body: JSON.stringify({ userId, workspaceId }),
   });
   const data = await response.json();
 
@@ -96,33 +97,15 @@ export async function deleteInvite(inviteId: string) {
     message: response.ok ? "Invitation deleted successfully" : data.message,
   };
 }
-
-export async function removeCollaborator(userId: string) {
+export async function removeCollaborator(userId: string, workspaceId: string) {
   const response = await fetch("/api/workspaces/collaborator", {
     method: "DELETE",
-    body: JSON.stringify({ userId }),
+    body: JSON.stringify({ userId, workspaceId }),
   });
   const data = await response.json();
 
   return {
     success: response.ok,
     message: response.ok ? "Collaborator removed successfully" : data.message,
-  };
-}
-
-/* 
-SEND INVITE TO OTHER USER
-*/
-
-export async function sendInvite(userId: string) {
-  const response = await fetch("/api/invite", {
-    method: "POST",
-    body: JSON.stringify({ userId }),
-  });
-  const data = await response.json();
-
-  return {
-    success: response.ok,
-    message: response.ok ? "Invite sent successfully" : data.message,
   };
 }

@@ -73,6 +73,8 @@ export default function Explorer({
   openUpload: () => void;
   openAccess: (workspaceId: string) => void;
 }) {
+  const handleCreateWorkspace = () => {};
+
   return (
     <ResizablePanelGroup direction="vertical">
       <ResizablePanel defaultSize={75}>
@@ -131,7 +133,12 @@ export default function Explorer({
                     ))}
                   </SelectContent>
                 </Select>
-                <Button className="w-full mt-2" size="sm" variant="secondary">
+                <Button
+                  onClick={handleCreateWorkspace}
+                  className="w-full mt-2"
+                  size="sm"
+                  variant="secondary"
+                >
                   <Plus className="!size-3" /> Create Workspace
                 </Button>
               </PopoverContent>
