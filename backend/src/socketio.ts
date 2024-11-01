@@ -85,27 +85,34 @@ export const handleConnection = (io: Server) => {
     });
 
     socket.on("disconnect", () => {
-      // Find and clean up the workspace/doc this socket was connected to
-      for (const [workspaceId, workspace] of workspaces.entries()) {
-        for (const [path, docData] of workspace.entries()) {
-          if (docData.clients.has(socket.id)) {
-            const roomId = `${workspaceId}:${path}`;
-            socket.to(roomId).emit("user-left", {
-              userId,
-              path,
-            });
-            docData.clients.delete(socket.id);
+      const workspaceId = socket.handshake.auth.workspaceId;
+      const workspace = workspaces.get(workspaceId);
+      if (!workspace) return;
 
-            // Clean up doc if no clients left
-            if (docData.clients.size === 0) {
-              workspace.delete(path);
-            }
+      for (const [path, docData] of workspace.entries()) {
+        if (docData.clients.has(socket.id)) {
+          const roomId = `${workspaceId}:${path}`;
+          socket.to(roomId).emit("user-left", {
+            userId,
+            path,
+          });
+          docData.clients.delete(socket.id);
+
+          const saveOnLeave = true;
+          if (saveOnLeave) {
+            const content = docData.doc.getText("content").toString();
+            debouncedUpdateFile(workspaceId, path, content);
           }
+
+          if (docData.clients.size === 0) {
+            workspace.delete(path);
+          }
+          break;
         }
-        // Clean up workspace if empty
-        if (workspace.size === 0) {
-          workspaces.delete(workspaceId);
-        }
+      }
+
+      if (workspace.size === 0) {
+        workspaces.delete(workspaceId);
       }
     });
   });
