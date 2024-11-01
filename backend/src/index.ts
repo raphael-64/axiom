@@ -66,20 +66,25 @@ app.get("/", (req: Request, res: Response) => {
   res.send("SE212 Server");
 });
 
-//Get all workspaces
-app.get("/get-workspaces/:userId", (req: Request, res: Response) => {
-  const userId = req.params.userId;
+// Get all workspaces
+app.get("/api/workspaces", async (req: Request, res: Response) => {
+  try {
+    const userId = req.headers["user-id"] as string; // You'll need to pass this from frontend
+    const workspaces = await getWorkspacesForUser(userId);
+    res.json({ workspaces });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch workspaces" });
+  }
 });
 
-//Update workspace sharing
-app.post("/update-sharing", (req: Request, res: Response) => {});
+// Create workspace
+app.put("/api/workspaces", async (req: Request, res: Response) => {
+  try {
+    const userId = req.headers["user-id"] as string;
+    const workspace = await createNewWorkspace(userId, "New Project");
 
-//Create a new workspace
-app.put(
-  "/create-workspace/:assignmentId",
-  async (req: Request, res: Response) => {
-    // Get all of the files
-    const assignmentId: string = req.params.assignmentId;
+    // Ian's code below, need to finish
+    /* const assignmentId: string = req.params.assignmentId;
     const files_map = await getFiles(); // Await the result of getFiles
     res.send(files_map);
     let files: File[] = [];
@@ -102,33 +107,8 @@ app.put(
           // continue from here next tiem
         });
       }
-    }
-  }
-);
+    } */
 
-//Delete a workspace
-app.delete("/delete-workspace", (req: Request, res: Response) => {});
-
-//Create workspace
-
-//Delete workspace
-
-// Get all workspaces
-app.get("/api/workspaces", async (req: Request, res: Response) => {
-  try {
-    const userId = req.headers["user-id"] as string; // You'll need to pass this from frontend
-    const workspaces = await getWorkspacesForUser(userId);
-    res.json({ workspaces });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch workspaces" });
-  }
-});
-
-// Create workspace
-app.put("/api/workspaces", async (req: Request, res: Response) => {
-  try {
-    const userId = req.headers["user-id"] as string;
-    const workspace = await createNewWorkspace(userId, "New Project");
     res.json({ workspaceId: workspace.id });
   } catch (error) {
     res.status(500).json({ message: "Failed to create workspace" });
