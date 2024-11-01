@@ -3,6 +3,7 @@ import * as Y from "yjs";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
+import { debouncedUpdateFile } from "./utils/utils";
 
 interface WorkspaceDoc {
   doc: Y.Doc;
@@ -16,7 +17,7 @@ export const handleConnection = (io: Server) => {
   io.on("connection", async (socket: Socket) => {
     const userId = socket.handshake.auth.userId;
 
-    if (!await checkUserIdInDatabase(userId)) {
+    if (!(await checkUserIdInDatabase(userId))) {
       socket.emit("error", "Invalid user ID provided");
       socket.disconnect();
       return;
@@ -76,6 +77,10 @@ export const handleConnection = (io: Server) => {
       // Apply update to server's doc
       const binaryUpdate = Buffer.from(update, "base64");
       Y.applyUpdate(docData.doc, binaryUpdate);
+
+      // Get the current content and debounce DB update
+      const content = docData.doc.getText("content").toString();
+      debouncedUpdateFile(workspaceId, path, content);
 
       // Broadcast to all other clients in same file
       const roomId = `${workspaceId}:${path}`;

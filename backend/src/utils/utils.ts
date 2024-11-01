@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import debounce from "lodash/debounce";
 const prisma = new PrismaClient();
 
 // src/utils.ts
@@ -88,3 +89,32 @@ export async function removeUserFromWorkspace(
     },
   });
 }
+
+export async function updateFileContent(
+  workspaceId: string,
+  path: string,
+  content: string
+) {
+  return await prisma.file.update({
+    where: {
+      workspaceId_path: {
+        workspaceId,
+        path,
+      },
+    },
+    data: {
+      content,
+    },
+  });
+}
+
+export const debouncedUpdateFile = debounce(
+  async (workspaceId: string, path: string, content: string) => {
+    try {
+      await updateFileContent(workspaceId, path, content);
+    } catch (error) {
+      console.error("Failed to update file in DB:", error);
+    }
+  },
+  500
+);
