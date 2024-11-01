@@ -1,6 +1,7 @@
 import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
 import { createServer } from "http";
+import { promises as fs } from 'fs';
 import { Server } from "socket.io";
 import { handleConnection } from "./socketio";
 import {
@@ -12,6 +13,7 @@ import {
   removeUserFromWorkspace,
 } from "./utils/utils";
 import cors from "cors";
+import path from "path";
 
 dotenv.config();
 
@@ -29,7 +31,7 @@ interface FileMap {
 const app: Express = express();
 const port = process.env.PORT || 3000;
 
-const load_files_locally = false;
+const load_files_locally = true;
 
 app.use(express.json());
 app.use(cors());
@@ -44,12 +46,12 @@ const io = new Server(httpServer, {
   },
 });
 
-const getFiles = async () => {
-  const files = await fetch(
-    "https://student.cs.uwaterloo.ca/~se212/files.json"
-  );
-  return await files.json();
-};
+  const getFiles = async () => {
+    const files = await fetch(
+      "https://student.cs.uwaterloo.ca/~se212/files.json"
+    );
+    return await files.json();
+  };
 
 const getFile = async (filename: string) => {
   const file = await fetch(
@@ -81,27 +83,31 @@ app.get("/api/workspaces", async (req: Request, res: Response) => {
 app.put("/api/workspaces", async (req: Request, res: Response) => {
   try {
     const userId = req.headers["user-id"] as string;
-    const workspace = await createNewWorkspace(userId, "New Project");
 
     //Ian's code below, need to finish
-    const assignmentId: string = req.params.assignmentId;
+    const assignmentId: string = req.headers["assignment-id"] as string;
     const files_map = await getFiles(); // Await the result of getFiles
-    res.send(files_map);
+    //res.send(files_map);
+    //console.log(files_map)
     let files: File[] = [];
     files_map.forEach((assignment: FileMap) => {
       if (assignment.name == assignmentId) {
         files = assignment.files;
       }
     });
-    console.log(files);
+    console.log(`Files: ${files}`);
     // Check if files is not null before iterating
     let loaded_files = [];
     if (files) {
       if (load_files_locally) {
-        files.forEach((file: File) => {
+        for (const file of files) {
           let filename = file.name;
-          let filepath = `../..${file.path}`;
-        });
+          console.log(file.path)
+          let local_filepath = path.join(__dirname, '../..', file.path); // Adjust the path as necessary
+          const fileContent: string = await fs.readFile(local_filepath, 'utf8');
+          loaded_files.push({"name": filename, "path": local_filepath, "content": fileContent})
+          console.log({"name": filename, "path": local_filepath, "content": fileContent})
+        }
       } else {
         files.forEach((file: File) => {
           // Loading files from remote, can't do that at the moment
@@ -111,10 +117,12 @@ app.put("/api/workspaces", async (req: Request, res: Response) => {
         });
       }
     }
-
+    console.log(`Starting workspace with files: ${files}`)
+    const workspace = await createNewWorkspace(userId, assignmentId, loaded_files);
+    console.log("Finished creating workspace")
     res.json({ workspaceId: workspace.id });
   } catch (error) {
-    res.status(500).json({ message: "Failed to create workspace" });
+    res.status(500).json({ message: "Failed to create workspace", error});
   }
 });
 

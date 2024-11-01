@@ -42,14 +42,22 @@ function getWorkspacesForUser(userId) {
         });
     });
 }
-function createNewWorkspace(userId, project) {
+function createNewWorkspace(userId, project, files) {
     return __awaiter(this, void 0, void 0, function* () {
         return yield prisma.workspace.create({
             data: {
-                project,
                 users: {
-                    connect: { id: userId },
+                    connect: { id: userId }, // Include the existing user in the users array
                 },
+                project: project,
+                files: {
+                    create: files.map(file => ({
+                        path: file.path,
+                        name: file.name,
+                        content: file.content,
+                    })),
+                },
+                invites: { create: [] },
             },
         });
     });

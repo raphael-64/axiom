@@ -24,13 +24,21 @@ export async function getWorkspacesForUser(userId: string) {
   });
 }
 
-export async function createNewWorkspace(userId: string, project: string) {
+export async function createNewWorkspace(userId: string, project: string, files: { path: string; name: string; content: string }[]) {
   return await prisma.workspace.create({
     data: {
-      project,
       users: {
-        connect: { id: userId },
+        connect: { id: userId }, // Include the existing user in the users array
       },
+      project: project,
+      files: {
+        create: files.map(file => ({
+          path: file.path,
+          name: file.name,
+          content: file.content,
+        })),
+      },
+      invites: { create: [] },
     },
   });
 }
