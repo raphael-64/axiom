@@ -2,7 +2,7 @@ import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import { handleConnection } from "@services/socketClient"; // Adjust the path as needed
+import { handleConnection } from "./socketio";
 import {
   getWorkspacesForUser,
   createNewWorkspace,
