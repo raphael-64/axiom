@@ -543,8 +543,68 @@ export const registerGeorge: OnMount = (editor, monaco) => {
     // Handle Enter key for incrementing
     if (e.keyCode === monaco.KeyCode.Enter) {
       const lineContent = model.getLineContent(position.lineNumber);
-      const match = lineContent.match(/^\s*(\d+)\)/);
 
+      // Check if cursor is between braces
+      if (
+        lineContent.trim().endsWith("{}") &&
+        position.column === lineContent.indexOf("}") + 1
+      ) {
+        e.preventDefault();
+        const currentIndent = lineContent.match(/^\s*/)?.[0] || "";
+        const additionalIndent = "\t"; // Tab for nested indent
+
+        // Insert new line with proper indentation
+        const operations = [
+          {
+            range: new monaco.Range(
+              position.lineNumber,
+              position.column,
+              position.lineNumber,
+              position.column
+            ),
+            text:
+              "\n" + currentIndent + additionalIndent + "\n" + currentIndent,
+          },
+        ];
+
+        model.pushEditOperations([], operations, () => null);
+
+        // Position cursor on the indented line
+        editor.setPosition({
+          lineNumber: position.lineNumber + 1,
+          column: (currentIndent + additionalIndent).length + 1,
+        });
+        return;
+      }
+
+      // Check for empty line number
+      const emptyMatch = lineContent.match(/^\s*(\d+)\)\s*$/);
+      if (emptyMatch) {
+        e.preventDefault();
+        const currentIndent = lineContent.match(/^\s*/)?.[0] || "";
+
+        // Replace the line with just the indentation
+        const operations = [
+          {
+            range: new monaco.Range(
+              position.lineNumber,
+              1,
+              position.lineNumber,
+              lineContent.length + 1
+            ),
+            text: currentIndent,
+          },
+        ];
+
+        model.pushEditOperations([], operations, () => null);
+        editor.setPosition({
+          lineNumber: position.lineNumber,
+          column: currentIndent.length + 1,
+        });
+        return;
+      }
+
+      const match = lineContent.match(/^\s*(\d+)\)/);
       if (match) {
         e.preventDefault();
         const currentNumber = parseInt(match[1]);
@@ -609,51 +669,124 @@ export const registerGeorge: OnMount = (editor, monaco) => {
       e.keyCode === monaco.KeyCode.Backspace ||
       e.keyCode === monaco.KeyCode.Delete
     ) {
+      const selection = editor.getSelection();
+      if (!selection) return;
+
       const lineContent = model.getLineContent(position.lineNumber);
       const match = lineContent.match(/^\s*(\d+)\)/);
 
-      if (match) {
-        const currentNumber = parseInt(match[1]);
-        const currentIndent = lineContent.match(/^\s*/)?.[0] || "";
+      // If there's a multi-line selection
+      if (!selection.isEmpty()) {
+        const startLine = selection.startLineNumber;
+        const endLine = selection.endLineNumber;
 
-        // Get sequential lines after current position
-        const followingLines = [];
-        let expectedNumber = currentNumber + 1;
-        for (let i = position.lineNumber + 1; i <= model.getLineCount(); i++) {
+        // Get the first numbered line after the selection
+        let nextNumberedLine = endLine + 1;
+        let followingLines = [];
+        let expectedNumber;
+
+        // Find the first numbered line before the selection
+        let lastNumberBeforeSelection: number | undefined;
+        for (let i = startLine - 1; i > 0; i--) {
           const line = model.getLineContent(i);
           const numMatch = line.match(/^\s*(\d+)\)/);
           if (numMatch) {
-            const lineNum = parseInt(numMatch[1]);
-            if (lineNum !== expectedNumber) break;
-            followingLines.push({
-              lineNumber: i,
-              number: lineNum,
-              content: line,
-            });
-            expectedNumber++;
+            lastNumberBeforeSelection = parseInt(numMatch[1]);
+            break;
           }
         }
 
-        // If there are following lines to update, create the operations
-        if (followingLines.length > 0) {
-          const operations = followingLines.map((line) => ({
-            range: new monaco.Range(
-              line.lineNumber,
-              1,
-              line.lineNumber,
-              line.content.length + 1
-            ),
-            text: line.content.replace(
-              /^\s*\d+\)/,
-              `${currentIndent}${line.number - 1})`
-            ),
-          }));
+        // If we found a numbered line before the selection
+        if (lastNumberBeforeSelection !== undefined) {
+          expectedNumber = lastNumberBeforeSelection + 1;
 
-          // Let the delete/backspace happen first, then update line numbers
-          setTimeout(() => {
-            model.pushEditOperations([], operations, () => null);
-          }, 0);
+          // Collect following sequential lines
+          for (let i = nextNumberedLine; i <= model.getLineCount(); i++) {
+            const line = model.getLineContent(i);
+            const numMatch = line.match(/^\s*(\d+)\)/);
+            if (numMatch) {
+              const lineNum = parseInt(numMatch[1]);
+              if (expectedNumber === undefined) {
+                expectedNumber = lineNum;
+              } else if (lineNum !== expectedNumber) {
+                break;
+              }
+              followingLines.push({
+                lineNumber: i,
+                number: lineNum,
+                content: line,
+              });
+              expectedNumber++;
+            }
+          }
+
+          // If there are following lines to update
+          if (followingLines.length > 0) {
+            const operations = followingLines.map((line, index) => ({
+              range: new monaco.Range(
+                line.lineNumber,
+                1,
+                line.lineNumber,
+                line.content.length + 1
+              ),
+              text: line.content.replace(
+                /^\s*\d+\)/,
+                `${line.content.match(/^\s*/)?.[0] || ""}${
+                  lastNumberBeforeSelection + 1 + index
+                })`
+              ),
+            }));
+
+            // Let the delete happen first, then update line numbers
+            setTimeout(() => {
+              model.pushEditOperations([], operations, () => null);
+            }, 0);
+          }
         }
+        return;
+      }
+
+      if (!match) return;
+      const currentNumber = parseInt(match[1]);
+      const currentIndent = lineContent.match(/^\s*/)?.[0] || "";
+
+      // Get sequential lines after current position
+      const followingLines = [];
+      let expectedNumber = currentNumber + 1;
+      for (let i = position.lineNumber + 1; i <= model.getLineCount(); i++) {
+        const line = model.getLineContent(i);
+        const numMatch = line.match(/^\s*(\d+)\)/);
+        if (numMatch) {
+          const lineNum = parseInt(numMatch[1]);
+          if (lineNum !== expectedNumber) break;
+          followingLines.push({
+            lineNumber: i,
+            number: lineNum,
+            content: line,
+          });
+          expectedNumber++;
+        }
+      }
+
+      // If there are following lines to update, create the operations
+      if (followingLines.length > 0) {
+        const operations = followingLines.map((line) => ({
+          range: new monaco.Range(
+            line.lineNumber,
+            1,
+            line.lineNumber,
+            line.content.length + 1
+          ),
+          text: line.content.replace(
+            /^\s*\d+\)/,
+            `${currentIndent}${line.number - 1})`
+          ),
+        }));
+
+        // Let the delete/backspace happen first, then update line numbers
+        setTimeout(() => {
+          model.pushEditOperations([], operations, () => null);
+        }, 0);
       }
     }
 
