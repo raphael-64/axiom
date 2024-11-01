@@ -10,7 +10,7 @@ An editor for George, for [SE212 (Logic and Computation](https://student.cs.uwat
 - VSCode-like editor features and shortcuts (we use the same editor library as VSCode)
 - Intelligent language support
   - Auto-closing braces and indentations
-  - Todo: Comments
+  - Comments
   - Line numbers
     - Incrementing and decrementing numbers
     - Remove empty lines with line numbers with `Enter`
