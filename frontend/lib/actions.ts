@@ -109,3 +109,20 @@ export async function removeCollaborator(userId: string) {
     message: response.ok ? "Collaborator removed successfully" : data.message,
   };
 }
+
+/* 
+SEND INVITE TO OTHER USER
+*/
+
+export async function sendInvite(userId: string) {
+  const response = await fetch("/api/invite", {
+    method: "POST",
+    body: JSON.stringify({ userId }),
+  });
+  const data = await response.json();
+
+  return {
+    success: response.ok,
+    message: response.ok ? "Invite sent successfully" : data.message,
+  };
+}

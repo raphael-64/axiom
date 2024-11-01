@@ -12,6 +12,7 @@ datasource db {
 model User {
   id        String     @id @unique
   workspaces Workspace[]
+  invites   Invite[]
 }
 
 model Workspace {
@@ -21,6 +22,7 @@ model Workspace {
   files     File[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  invites   Invite[]
 }
 
 model File {
@@ -32,4 +34,14 @@ model File {
   workspaceId String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Invite {
+  id        String   @id @default(uuid())
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+  workspaceId String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
