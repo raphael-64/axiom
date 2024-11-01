@@ -53,6 +53,11 @@ export default function ManageAccessModal({
                 </Button>
               </div>
             ))}
+          </div>
+        </div>
+        <div className="p-4 border-t bg-tabs-bg space-y-3">
+          <div className="font-semibold">Pending Invites</div>
+          <div className="space-y-1">
             {invites.map((invite) => (
               <div className="flex items-center justify-between text-sm">
                 <div className="font-medium flex items-center gap-2">
