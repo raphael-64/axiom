@@ -23,7 +23,13 @@ export async function getWorkspacesForUser(userId: string) {
   });
 }
 
-export async function createNewWorkspace(userId: string, project: string, files: { path: string; name: string; content: string }[]) {
+export async function createNewWorkspace(
+  userId: string,
+  project: string,
+  files: { path: string; name: string; content: string }[]
+) {
+  await upsertUser(userId); // Temporary upsert user, since we don't have auth yet
+
   return await prisma.workspace.create({
     data: {
       users: {
@@ -31,7 +37,7 @@ export async function createNewWorkspace(userId: string, project: string, files:
       },
       project: project,
       files: {
-        create: files.map(file => ({
+        create: files.map((file) => ({
           path: file.path,
           name: file.name,
           content: file.content,
@@ -136,3 +142,15 @@ export const debouncedUpdateFile = debounce(
   },
   500
 );
+
+export async function upsertUser(userId: string) {
+  return await prisma.user.upsert({
+    where: {
+      id: userId,
+    },
+    create: {
+      id: userId,
+    },
+    update: {}, // no updates needed since we only have id
+  });
+}
