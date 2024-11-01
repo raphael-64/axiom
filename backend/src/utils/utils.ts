@@ -1,5 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
+import prisma from "../prisma";
 
 // src/utils.ts
 export const greet = (name: string): string => {
@@ -96,3 +95,44 @@ export async function removeUserFromWorkspace(
     },
   });
 }
+
+export async function updateFileContent(
+  workspaceId: string,
+  path: string,
+  content: string
+) {
+  return await prisma.file.update({
+    where: {
+      workspaceId_path: {
+        workspaceId,
+        path,
+      },
+    },
+    data: {
+      content,
+    },
+  });
+}
+
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout;
+
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}
+
+export const debouncedUpdateFile = debounce(
+  async (workspaceId: string, path: string, content: string) => {
+    try {
+      await updateFileContent(workspaceId, path, content);
+    } catch (error) {
+      console.error("Failed to update file in DB:", error);
+    }
+  },
+  500
+);

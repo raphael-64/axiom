@@ -71,7 +71,7 @@ app.get("/", (req: Request, res: Response) => {
 // Get all workspaces
 app.get("/api/workspaces", async (req: Request, res: Response) => {
   try {
-    const userId = req.headers["user-id"] as string; // You'll need to pass this from frontend
+    const userId = req.query.userId as string;
     const workspaces = await getWorkspacesForUser(userId);
     res.json({ workspaces });
   } catch (error) {
@@ -82,10 +82,8 @@ app.get("/api/workspaces", async (req: Request, res: Response) => {
 // Create workspace
 app.put("/api/workspaces", async (req: Request, res: Response) => {
   try {
-    const userId = req.headers["user-id"] as string;
-
+    const { userId, assignmentId } = JSON.parse(req.body as string);
     //Ian's code below, need to finish
-    const assignmentId: string = req.headers["assignment-id"] as string;
     const files_map = await getFiles(); // Await the result of getFiles
     //res.send(files_map);
     //console.log(files_map)
@@ -140,8 +138,7 @@ app.delete("/api/workspaces", async (req: Request, res: Response) => {
 // Invite to workspace
 app.post("/api/workspaces/invite", async (req: Request, res: Response) => {
   try {
-    const { userId } = JSON.parse(req.body as string);
-    const workspaceId = req.headers["workspace-id"] as string;
+    const { userId, workspaceId } = JSON.parse(req.body as string);
     const invite = await createWorkspaceInvite(workspaceId, userId);
     res.json({ inviteId: invite.id });
   } catch (error) {
@@ -181,8 +178,7 @@ app.delete(
   "/api/workspaces/collaborator",
   async (req: Request, res: Response) => {
     try {
-      const { userId } = JSON.parse(req.body as string);
-      const workspaceId = req.headers["workspace-id"] as string;
+      const { userId, workspaceId } = JSON.parse(req.body as string);
       await removeUserFromWorkspace(workspaceId, userId);
       res.json({ message: "Collaborator removed successfully" });
     } catch (error) {

@@ -27,6 +27,7 @@ import { MonacoBinding } from "y-monaco";
 import { Socket, io } from "socket.io-client";
 import { toast } from "sonner";
 import ManageAccessModal from "./access";
+import { Input } from "../ui/input";
 
 const sizes = {
   min: 140,
@@ -56,6 +57,11 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
   const [socket, setSocket] = useState<Socket>();
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>();
   const workspaceDocsRef = useRef<Map<string, Y.Doc>>(new Map());
+
+  const randomId = Math.floor(Math.random() * 900000 + 100000);
+  const [tempUserId, setTempUserId] = useState<string>(
+    `test_watiam_${randomId}`
+  );
 
   const toggleExplorer = () => {
     const panel = explorerRef.current;
@@ -231,15 +237,14 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     setOpenTabs((prevTabs) => {
       const newTabs = prevTabs.filter((_, i) => i !== indexToClose);
 
-      // If closing last workspace tab, clear workspace
+      // If closing last workspace tab, clean up workspace
       if (closingTab.workspaceId) {
         const hasOtherWorkspaceTabs = newTabs.some(
           (tab) => tab.workspaceId === closingTab.workspaceId
         );
         if (!hasOtherWorkspaceTabs) {
           setActiveWorkspaceId(undefined);
-          socket?.emit("leaveRoom", closingTab.workspaceId);
-          // Clean up workspace docs
+          socket?.disconnect();
           workspaceDocsRef.current.delete(closingTab.path);
         }
       }
@@ -276,8 +281,8 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
   // Clean up on unmount
   useEffect(() => {
     return () => {
-      if (activeWorkspaceId) {
-        socket?.emit("leaveRoom", activeWorkspaceId);
+      if (socket?.connected) {
+        socket.disconnect();
       }
       workspaceDocsRef.current.clear();
       monacoBinding?.destroy();
@@ -360,6 +365,11 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
             </TooltipButton>
           </div>
           <div className="flex items-center">
+            <Input
+              value={tempUserId}
+              placeholder="Temporary User ID"
+              onChange={(e) => setTempUserId(e.target.value)}
+            />
             <TooltipButton
               variant="ghost"
               size="smIcon"
@@ -396,6 +406,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
             minSize={percentSizes.min}
           >
             <Explorer
+              userId={tempUserId}
               files={files}
               onFileClick={handleFileClick}
               openUpload={() => setIsUploadOpen(true)}
