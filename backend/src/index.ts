@@ -83,7 +83,7 @@ app.put("/api/workspaces", async (req: Request, res: Response) => {
     const userId = req.headers["user-id"] as string;
     const workspace = await createNewWorkspace(userId, "New Project");
 
-    // Ian's code below, need to finish
+    //Ian's code below, need to finish
     /* const assignmentId: string = req.params.assignmentId;
     const files_map = await getFiles(); // Await the result of getFiles
     res.send(files_map);
