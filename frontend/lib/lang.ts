@@ -848,7 +848,6 @@ export const registerGeorge: OnMount = (editor, monaco) => {
 
       if (match) {
         const currentNumber = parseInt(match[1]);
-        const currentIndent = lineContent.match(/^\s*/)?.[0] || "";
 
         // Get sequential lines after current position
         const followingLines = [];
@@ -880,7 +879,7 @@ export const registerGeorge: OnMount = (editor, monaco) => {
             ),
             text: line.content.replace(
               /^\s*\d+\)/,
-              `${currentIndent}${line.number - 1})`
+              `${line.indent}${line.number - 1})`
             ),
           }));
 
