@@ -451,9 +451,9 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
                       },
                       scrollBeyondLastLine: false,
                       fixedOverflowWidgets: true,
-                      // autoClosingBrackets: "always",
-                      // autoClosingQuotes: "always",
-                      // autoIndent: "full",
+                      autoClosingBrackets: "always",
+                      autoClosingQuotes: "always",
+                      autoIndent: "full",
                       formatOnPaste: true,
                       formatOnType: true,
                     }}

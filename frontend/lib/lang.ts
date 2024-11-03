@@ -36,7 +36,7 @@ export const registerGeorge: OnMount = (editor, monaco) => {
   monaco.languages.setMonarchTokensProvider("george", {
     tokenizer: {
       root: [
-        // Comments - must be before other rules to take precedence
+        // Comments - must be before other rules
         [/\/\/.*$/, "comment"],
 
         // Source constants (#q, #u, #a)
@@ -45,8 +45,8 @@ export const registerGeorge: OnMount = (editor, monaco) => {
         // Check statements
         [/#check\s+(PROP|ND|PC|Z|TP|ST|PRED|NONE)\b/, "constant.other"],
 
-        // Comments
-        [/%.*$/, "comment"],
+        // Line numbers - must be before regular numbers
+        [/^\s*\d+\)/, "variable.language"],
 
         // Keywords
         [
@@ -69,17 +69,14 @@ export const registerGeorge: OnMount = (editor, monaco) => {
           "constant.numeric",
         ],
 
-        // Special symbols - fixed order in character class
+        // Special symbols
         [/[&()+:;=\|\-<>?!]/, "constant.numeric"],
 
-        // Line numbers
-        [/^\s*?\d+\)/, "variable.language"],
+        // Identifiers with numbers - must be before standalone numbers
+        [/[a-zA-Z_]\w*/, "identifier"],
 
-        // Numbers
+        // Standalone numbers - moved to end
         [/\b\d+\b/, "variable.language"],
-
-        // Magic keyword
-        [/\bmagic\b/, "string.regexp"],
       ],
     },
   });
@@ -538,6 +535,32 @@ export const registerGeorge: OnMount = (editor, monaco) => {
   // Set the theme
   monaco.editor.setTheme("george");
 
+  // Helper function to update references in a line
+  const updateReferences = (
+    content: string,
+    startNumber: number,
+    increment: boolean
+  ) => {
+    // Match numbers after "on" that are references, capturing spaces
+    return content.replace(/\bon\s+(\d+(?:\s*,\s*\d+)*)/g, (match, numbers) => {
+      // Split by comma but capture whitespace
+      const refs = numbers.split(/(\s*,\s*)/);
+      const updatedRefs = refs.map((part: string) => {
+        // If it's a comma with whitespace, preserve it
+        if (part.includes(",")) {
+          return part;
+        }
+        // If it's a number, update it
+        const num = parseInt(part.trim());
+        if (!isNaN(num) && num >= startNumber) {
+          return increment ? num + 1 : num - 1;
+        }
+        return part;
+      });
+      return `on ${updatedRefs.join("")}`;
+    });
+  };
+
   // Add enter key handler to editor
   editor.onKeyDown((e) => {
     const model = editor.getModel();
@@ -649,18 +672,25 @@ export const registerGeorge: OnMount = (editor, monaco) => {
             ),
             text: "\n" + newLine,
           },
-          ...followingLines.map((line) => ({
-            range: new monaco.Range(
-              line.lineNumber,
-              1,
-              line.lineNumber,
-              line.content.length + 1
-            ),
-            text: line.content.replace(
-              /^\s*\d+\)/,
-              `${line.indent}${line.number + 1})`
-            ),
-          })),
+          ...followingLines.map((line) => {
+            const updatedContent = updateReferences(
+              line.content,
+              currentNumber + 1,
+              true
+            );
+            return {
+              range: new monaco.Range(
+                line.lineNumber,
+                1,
+                line.lineNumber,
+                line.content.length + 1
+              ),
+              text: updatedContent.replace(
+                /^\s*\d+\)/,
+                `${line.indent}${line.number + 1})`
+              ),
+            };
+          }),
         ];
 
         model.pushEditOperations([], operations, () => null);
@@ -722,6 +752,7 @@ export const registerGeorge: OnMount = (editor, monaco) => {
                 lineNumber: i,
                 number: lineNum,
                 content: line,
+                indent: line.match(/^\s*/)?.[0] || "",
               });
               expectedNumber++;
             }
@@ -729,20 +760,25 @@ export const registerGeorge: OnMount = (editor, monaco) => {
 
           // If there are following lines to update
           if (followingLines.length > 0) {
-            const operations = followingLines.map((line, index) => ({
-              range: new monaco.Range(
-                line.lineNumber,
-                1,
-                line.lineNumber,
-                line.content.length + 1
-              ),
-              text: line.content.replace(
-                /^\s*\d+\)/,
-                `${line.content.match(/^\s*/)?.[0] || ""}${
-                  lastNumberBeforeSelection + 1 + index
-                })`
-              ),
-            }));
+            const operations = followingLines.map((line) => {
+              const updatedContent = updateReferences(
+                line.content,
+                currentNumber + 1,
+                false
+              );
+              return {
+                range: new monaco.Range(
+                  line.lineNumber,
+                  1,
+                  line.lineNumber,
+                  line.content.length + 1
+                ),
+                text: updatedContent.replace(
+                  /^\s*\d+\)/,
+                  `${line.indent}${line.number - 1})`
+                ),
+              };
+            });
 
             // Let the delete happen first, then update line numbers
             setTimeout(() => {
@@ -770,6 +806,7 @@ export const registerGeorge: OnMount = (editor, monaco) => {
             lineNumber: i,
             number: lineNum,
             content: line,
+            indent: line.match(/^\s*/)?.[0] || "",
           });
           expectedNumber++;
         }
@@ -777,18 +814,25 @@ export const registerGeorge: OnMount = (editor, monaco) => {
 
       // If there are following lines to update, create the operations
       if (followingLines.length > 0) {
-        const operations = followingLines.map((line) => ({
-          range: new monaco.Range(
-            line.lineNumber,
-            1,
-            line.lineNumber,
-            line.content.length + 1
-          ),
-          text: line.content.replace(
-            /^\s*\d+\)/,
-            `${currentIndent}${line.number - 1})`
-          ),
-        }));
+        const operations = followingLines.map((line) => {
+          const updatedContent = updateReferences(
+            line.content,
+            currentNumber + 1,
+            false
+          );
+          return {
+            range: new monaco.Range(
+              line.lineNumber,
+              1,
+              line.lineNumber,
+              line.content.length + 1
+            ),
+            text: updatedContent.replace(
+              /^\s*\d+\)/,
+              `${line.indent}${line.number - 1})`
+            ),
+          };
+        });
 
         // Let the delete/backspace happen first, then update line numbers
         setTimeout(() => {
@@ -819,6 +863,7 @@ export const registerGeorge: OnMount = (editor, monaco) => {
               lineNumber: i,
               number: lineNum,
               content: line,
+              indent: line.match(/^\s*/)?.[0] || "",
             });
             expectedNumber++;
           }
