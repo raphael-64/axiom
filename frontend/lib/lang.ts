@@ -629,6 +629,7 @@ export const registerGeorge: OnMount = (editor, monaco) => {
               lineNumber: i,
               number: lineNum,
               content: line,
+              indent: line.match(/^\s*/)?.[0] || "",
             });
             expectedNumber++;
           }
@@ -657,7 +658,7 @@ export const registerGeorge: OnMount = (editor, monaco) => {
             ),
             text: line.content.replace(
               /^\s*\d+\)/,
-              `${currentIndent}${line.number + 1})`
+              `${line.indent}${line.number + 1})`
             ),
           })),
         ];
