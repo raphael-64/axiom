@@ -1,5 +1,6 @@
 import { OnMount } from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
+import { ruleDefinitions } from "./rules";
 
 export const registerGeorge: OnMount = (editor, monaco) => {
   // Register the george language
@@ -512,6 +513,88 @@ export const registerGeorge: OnMount = (editor, monaco) => {
     },
   });
 
+  // Add definition provider before theme definition
+  monaco.languages.registerDefinitionProvider("george", {
+    provideDefinition: (model, position) => {
+      const wordInfo = model.getWordAtPosition(position);
+      if (!wordInfo) return null;
+
+      const lineContent = model.getLineContent(position.lineNumber);
+
+      // Check if the word is a number or part of a range
+      const numberPattern = /^\d+$/;
+      const rangePattern = /^(\d+)-(\d+)$/;
+
+      // Get all references after "on"
+      const onMatch = lineContent.match(/\bon\s+(.*?)(?=\s*(?:by|$))/);
+      if (!onMatch) return null;
+
+      const referencesStr = onMatch[1];
+      const cursorPosition = position.column;
+
+      // Find which reference the cursor is on
+      let currentPos = lineContent.indexOf(referencesStr);
+      const references = referencesStr.split(/\s*,\s*/);
+
+      for (const ref of references) {
+        const start = currentPos;
+        const end = currentPos + ref.length;
+
+        if (cursorPosition >= start && cursorPosition <= end) {
+          // Check if it's a range (e.g., "106-120")
+          const rangeMatch = ref.match(rangePattern);
+          if (rangeMatch) {
+            const [startNum, endNum] = [
+              parseInt(rangeMatch[1]),
+              parseInt(rangeMatch[2]),
+            ];
+            // If cursor is on the first number
+            if (cursorPosition <= start + rangeMatch[1].length) {
+              return findLineDefinition(model, startNum);
+            }
+            // If cursor is on the second number
+            if (cursorPosition > start + rangeMatch[1].length + 1) {
+              return findLineDefinition(model, endNum);
+            }
+            return null;
+          }
+
+          // Single number
+          if (numberPattern.test(ref)) {
+            return findLineDefinition(model, parseInt(ref));
+          }
+        }
+
+        currentPos = end + 1; // +1 for the comma
+      }
+
+      return null;
+    },
+  });
+
+  // Helper function to find line definition
+  function findLineDefinition(
+    model: monaco.editor.ITextModel,
+    lineNum: number
+  ) {
+    for (let i = 1; i <= model.getLineCount(); i++) {
+      const line = model.getLineContent(i);
+      const match = line.match(new RegExp(`^\\s*${lineNum}\\)`));
+      if (match) {
+        return {
+          uri: model.uri,
+          range: {
+            startLineNumber: i,
+            startColumn: 1,
+            endLineNumber: i,
+            endColumn: line.length + 1,
+          },
+        };
+      }
+    }
+    return null;
+  }
+
   // Define theme colors
   monaco.editor.defineTheme("george", {
     base: "vs-dark",
@@ -700,5 +783,31 @@ export const registerGeorge: OnMount = (editor, monaco) => {
         });
       }
     }
+  });
+
+  // Add hover provider before theme definition
+  monaco.languages.registerHoverProvider("george", {
+    provideHover: (model, position) => {
+      const wordInfo = model.getWordAtPosition(position);
+      if (!wordInfo) return null;
+
+      const ruleDef = ruleDefinitions[wordInfo.word];
+      if (ruleDef) {
+        return {
+          range: new monaco.Range(
+            position.lineNumber,
+            wordInfo.startColumn,
+            position.lineNumber,
+            wordInfo.endColumn
+          ),
+          contents: [
+            { value: `**${wordInfo.word}** (${ruleDef.category})` },
+            { value: ruleDef.definition },
+          ],
+        };
+      }
+
+      return null;
+    },
   });
 };

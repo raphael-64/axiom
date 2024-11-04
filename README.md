@@ -12,10 +12,12 @@ An editor for George, for [SE212 (Logic and Computation](https://student.cs.uwat
   - Auto-closing braces and indentations
   - Comments
   - Line numbers
+    - Go to definition
+    - Hover to show rule definition
     - Incrementing and decrementing numbers
     - Remove empty lines with line numbers with `Enter`
+    - Auto-updating rule references
     - Todo: Cuts off above and below at `#check x`
-    - Todo: Auto-updating rule references
 
 ## Running Locally
 
