@@ -75,11 +75,8 @@ app.get("/api/workspaces", async (req: Request, res: Response) => {
 // Create workspace
 app.put("/api/workspaces", async (req: Request, res: Response) => {
   try {
-    const { userId, assignmentId } = JSON.parse(req.body as string);
-    //Ian's code below, need to finish
+    const { userId, assignmentId } = req.body;
     const files_map = await getFiles(); // Await the result of getFiles
-    //res.send(files_map);
-    //console.log(files_map)
     let files: File[] = [];
     files_map.forEach((assignment: FileMap) => {
       if (assignment.name == assignmentId) {
@@ -132,7 +129,7 @@ app.put("/api/workspaces", async (req: Request, res: Response) => {
 // Delete workspace
 app.delete("/api/workspaces", async (req: Request, res: Response) => {
   try {
-    const { workspaceId } = JSON.parse(req.body as string);
+    const { workspaceId } = req.body;
     await deleteWorkspaceById(workspaceId);
     res.json({ message: "Workspace deleted successfully" });
   } catch (error) {
@@ -143,7 +140,7 @@ app.delete("/api/workspaces", async (req: Request, res: Response) => {
 // Invite to workspace
 app.post("/api/workspaces/invite", async (req: Request, res: Response) => {
   try {
-    const { userId, workspaceId } = JSON.parse(req.body as string);
+    const { userId, workspaceId } = req.body;
     const invite = await createWorkspaceInvite(workspaceId, userId);
     res.json({ inviteId: invite.id });
   } catch (error) {
@@ -156,7 +153,7 @@ app.post(
   "/api/workspaces/invite/accept",
   async (req: Request, res: Response) => {
     try {
-      const { inviteId, accept } = JSON.parse(req.body as string);
+      const { inviteId, accept } = req.body;
       await handleInviteResponse(inviteId, accept);
       res.json({
         message: `Invitation ${accept ? "accepted" : "declined"} successfully`,
@@ -170,7 +167,7 @@ app.post(
 // Delete invite
 app.delete("/api/workspaces/invite", async (req: Request, res: Response) => {
   try {
-    const { inviteId } = JSON.parse(req.body as string);
+    const { inviteId } = req.body;
     await handleInviteResponse(inviteId, false);
     res.json({ message: "Invitation deleted successfully" });
   } catch (error) {
@@ -183,7 +180,7 @@ app.delete(
   "/api/workspaces/collaborator",
   async (req: Request, res: Response) => {
     try {
-      const { userId, workspaceId } = JSON.parse(req.body as string);
+      const { userId, workspaceId } = req.body;
       await removeUserFromWorkspace(workspaceId, userId);
       res.json({ message: "Collaborator removed successfully" });
     } catch (error) {

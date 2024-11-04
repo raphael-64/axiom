@@ -59,11 +59,8 @@ app.get("/api/workspaces", (req, res) => __awaiter(void 0, void 0, void 0, funct
 // Create workspace
 app.put("/api/workspaces", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { userId, assignmentId } = JSON.parse(req.body);
-        //Ian's code below, need to finish
+        const { userId, assignmentId } = req.body;
         const files_map = yield getFiles(); // Await the result of getFiles
-        //res.send(files_map);
-        //console.log(files_map)
         let files = [];
         files_map.forEach((assignment) => {
             if (assignment.name == assignmentId) {
@@ -113,7 +110,7 @@ app.put("/api/workspaces", (req, res) => __awaiter(void 0, void 0, void 0, funct
 // Delete workspace
 app.delete("/api/workspaces", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { workspaceId } = JSON.parse(req.body);
+        const { workspaceId } = req.body;
         yield (0, utils_1.deleteWorkspaceById)(workspaceId);
         res.json({ message: "Workspace deleted successfully" });
     }
@@ -124,7 +121,7 @@ app.delete("/api/workspaces", (req, res) => __awaiter(void 0, void 0, void 0, fu
 // Invite to workspace
 app.post("/api/workspaces/invite", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { userId, workspaceId } = JSON.parse(req.body);
+        const { userId, workspaceId } = req.body;
         const invite = yield (0, utils_1.createWorkspaceInvite)(workspaceId, userId);
         res.json({ inviteId: invite.id });
     }
@@ -135,7 +132,7 @@ app.post("/api/workspaces/invite", (req, res) => __awaiter(void 0, void 0, void 
 // Accept/decline invite
 app.post("/api/workspaces/invite/accept", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { inviteId, accept } = JSON.parse(req.body);
+        const { inviteId, accept } = req.body;
         yield (0, utils_1.handleInviteResponse)(inviteId, accept);
         res.json({
             message: `Invitation ${accept ? "accepted" : "declined"} successfully`,
@@ -148,7 +145,7 @@ app.post("/api/workspaces/invite/accept", (req, res) => __awaiter(void 0, void 0
 // Delete invite
 app.delete("/api/workspaces/invite", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { inviteId } = JSON.parse(req.body);
+        const { inviteId } = req.body;
         yield (0, utils_1.handleInviteResponse)(inviteId, false);
         res.json({ message: "Invitation deleted successfully" });
     }
@@ -159,7 +156,7 @@ app.delete("/api/workspaces/invite", (req, res) => __awaiter(void 0, void 0, voi
 // Remove collaborator
 app.delete("/api/workspaces/collaborator", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { userId, workspaceId } = JSON.parse(req.body);
+        const { userId, workspaceId } = req.body;
         yield (0, utils_1.removeUserFromWorkspace)(workspaceId, userId);
         res.json({ message: "Collaborator removed successfully" });
     }
