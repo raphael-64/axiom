@@ -22,39 +22,48 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handleConnection = void 0;
 const Y = __importStar(require("yjs"));
-// Store active workspaces and their documents
+const prisma_1 = __importDefault(require("./prisma"));
+const utils_1 = require("@utils/utils");
 const workspaces = new Map();
 const handleConnection = (io) => {
-    io.on("connection", (socket) => {
+    io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
         const userId = socket.handshake.auth.userId;
-        if (!userId) {
-            socket.emit("error", "No user ID provided");
+        const workspaceId = socket.handshake.auth.workspaceId;
+        if (!(yield checkUserAccess(userId, workspaceId))) {
+            socket.emit("error", "Unauthorized access to workspace");
             socket.disconnect();
             return;
         }
         console.log(`New connection: ${socket.id} (User: ${userId})`);
+        if (!workspaces.has(workspaceId)) {
+            workspaces.set(workspaceId, { doc: new Map(), clients: new Map() });
+        }
+        const workspace = workspaces.get(workspaceId);
+        workspace.clients.set(socket.id, userId);
         socket.on("joinRoom", ({ workspaceId, path }) => {
             const roomId = `${workspaceId}:${path}`;
             socket.join(roomId);
-            // Initialize workspace if needed
-            if (!workspaces.has(workspaceId)) {
-                workspaces.set(workspaceId, new Map());
+            if (!workspace.doc.has(path)) {
+                workspace.doc.set(path, new Y.Doc());
             }
-            const workspace = workspaces.get(workspaceId);
-            // Initialize document if needed
-            if (!workspace.has(path)) {
-                workspace.set(path, {
-                    doc: new Y.Doc(),
-                    clients: new Map(),
-                });
-            }
-            const docData = workspace.get(path);
-            docData.clients.set(socket.id, userId);
+            const docData = workspace.doc.get(path);
             // Send current document state to new client
-            const update = Y.encodeStateAsUpdate(docData.doc);
+            const update = Y.encodeStateAsUpdate(docData);
             socket.emit("sync", {
                 path,
                 update: Buffer.from(update).toString("base64"),
@@ -66,67 +75,50 @@ const handleConnection = (io) => {
             });
         });
         socket.on("doc-update", ({ workspaceId, path, update }) => {
-            const workspace = workspaces.get(workspaceId);
             if (!workspace)
                 return;
-            const docData = workspace.get(path);
+            const docData = workspace.doc.get(path);
             if (!docData)
                 return;
-            // Verify user is in workspace
-            if (!docData.clients.has(socket.id)) {
-                socket.emit("error", "Not authorized to edit this document");
-                return;
-            }
-            // Apply update to server's doc
             const binaryUpdate = Buffer.from(update, "base64");
-            Y.applyUpdate(docData.doc, binaryUpdate);
-            // Broadcast to all other clients in same file
+            Y.applyUpdate(docData, binaryUpdate);
+            const content = docData.getText("content").toString();
+            (0, utils_1.debouncedUpdateFile)(workspaceId, path, content);
             const roomId = `${workspaceId}:${path}`;
             socket.to(roomId).emit(`doc-update-${path}`, update);
         });
-        socket.on("leaveRoom", (workspaceId) => {
-            const workspace = workspaces.get(workspaceId);
-            if (!workspace)
-                return;
-            // Remove client from all docs in workspace
-            for (const [path, docData] of workspace.entries()) {
-                if (docData.clients.has(socket.id)) {
-                    const roomId = `${workspaceId}:${path}`;
-                    socket.to(roomId).emit("user-left", {
-                        userId,
-                        path,
+        socket.on("disconnect", () => __awaiter(void 0, void 0, void 0, function* () {
+            if (workspace) {
+                workspace.clients.delete(socket.id);
+                socket.to(workspaceId).emit("user-left", {
+                    userId,
+                });
+                if (workspace.clients.size === 0) {
+                    workspace.doc.forEach((doc, path) => {
+                        workspace.doc.delete(path);
                     });
-                    docData.clients.delete(socket.id);
-                }
-                // Clean up doc if no clients left
-                if (docData.clients.size === 0) {
-                    workspace.delete(path);
-                }
-            }
-            // Clean up workspace if empty
-            if (workspace.size === 0) {
-                workspaces.delete(workspaceId);
-            }
-        });
-        socket.on("disconnect", () => {
-            // Clean up client from all workspaces
-            for (const workspace of workspaces.values()) {
-                for (const [path, docData] of workspace.entries()) {
-                    if (docData.clients.has(socket.id)) {
-                        docData.clients.delete(socket.id);
-                        if (docData.clients.size === 0) {
-                            workspace.delete(path);
-                        }
-                    }
-                }
-            }
-            // Clean up empty workspaces
-            for (const [workspaceId, workspace] of workspaces.entries()) {
-                if (workspace.size === 0) {
                     workspaces.delete(workspaceId);
+                    yield prisma_1.default.workspace.delete({
+                        where: { id: workspaceId },
+                    });
                 }
             }
-        });
-    });
+        }));
+    }));
 };
 exports.handleConnection = handleConnection;
+function checkUserAccess(userId, workspaceId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const workspace = yield prisma_1.default.workspace.findFirst({
+            where: {
+                id: workspaceId,
+                users: {
+                    some: {
+                        id: userId,
+                    },
+                },
+            },
+        });
+        return workspace !== null;
+    });
+}

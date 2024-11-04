@@ -74,7 +74,7 @@ export const handleConnection = (io: Server) => {
     socket.on("disconnect", async () => {
       if (workspace) {
         workspace.clients.delete(socket.id);
-        
+
         socket.to(workspaceId).emit("user-left", {
           userId,
         });
@@ -83,7 +83,7 @@ export const handleConnection = (io: Server) => {
           workspace.doc.forEach((doc, path) => {
             workspace.doc.delete(path);
           });
-          
+
           workspaces.delete(workspaceId);
           await prisma.workspace.delete({
             where: { id: workspaceId },

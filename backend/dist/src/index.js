@@ -23,7 +23,7 @@ const cors_1 = __importDefault(require("cors"));
 const path_1 = __importDefault(require("path"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 4000;
 const load_files_locally = true;
 app.use(express_1.default.json());
 app.use((0, cors_1.default)());
@@ -35,6 +35,8 @@ const io = new socket_io_1.Server(httpServer, {
         origin: "*", // Adjust for security if needed
     },
 });
+// Integrate the connection handler with Socket.IO
+(0, socketio_1.handleConnection)(io);
 const getFiles = () => __awaiter(void 0, void 0, void 0, function* () {
     const files = yield fetch("https://student.cs.uwaterloo.ca/~se212/files.json");
     return yield files.json();
@@ -43,8 +45,6 @@ const getFile = (filename) => __awaiter(void 0, void 0, void 0, function* () {
     const file = yield fetch(`https://student.cs.uwaterloo.ca/~se212${filename}`);
     return yield file.json();
 });
-// Integrate the connection handler with Socket.IO
-(0, socketio_1.handleConnection)(io);
 // Express route
 app.get("/", (req, res) => {
     res.send("SE212 Server");
@@ -52,7 +52,7 @@ app.get("/", (req, res) => {
 // Get all workspaces
 app.get("/api/workspaces", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const userId = req.headers["user-id"]; // You'll need to pass this from frontend
+        const userId = req.query.userId;
         const workspaces = yield (0, utils_1.getWorkspacesForUser)(userId);
         res.json({ workspaces });
     }
@@ -63,9 +63,8 @@ app.get("/api/workspaces", (req, res) => __awaiter(void 0, void 0, void 0, funct
 // Create workspace
 app.put("/api/workspaces", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const userId = req.headers["user-id"];
+        const { userId, assignmentId } = JSON.parse(req.body);
         //Ian's code below, need to finish
-        const assignmentId = req.headers["assignment-id"];
         const files_map = yield getFiles(); // Await the result of getFiles
         //res.send(files_map);
         //console.log(files_map)
@@ -83,10 +82,18 @@ app.put("/api/workspaces", (req, res) => __awaiter(void 0, void 0, void 0, funct
                 for (const file of files) {
                     let filename = file.name;
                     console.log(file.path);
-                    let local_filepath = path_1.default.join(__dirname, '../..', file.path); // Adjust the path as necessary
-                    const fileContent = yield fs_1.promises.readFile(local_filepath, 'utf8');
-                    loaded_files.push({ "name": filename, "path": local_filepath, "content": fileContent });
-                    console.log({ "name": filename, "path": local_filepath, "content": fileContent });
+                    let local_filepath = path_1.default.join(__dirname, "../..", file.path); // Adjust the path as necessary
+                    const fileContent = yield fs_1.promises.readFile(local_filepath, "utf8");
+                    loaded_files.push({
+                        name: filename,
+                        path: local_filepath,
+                        content: fileContent,
+                    });
+                    console.log({
+                        name: filename,
+                        path: local_filepath,
+                        content: fileContent,
+                    });
                 }
             }
             else {
@@ -121,8 +128,7 @@ app.delete("/api/workspaces", (req, res) => __awaiter(void 0, void 0, void 0, fu
 // Invite to workspace
 app.post("/api/workspaces/invite", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { userId } = JSON.parse(req.body);
-        const workspaceId = req.headers["workspace-id"];
+        const { userId, workspaceId } = JSON.parse(req.body);
         const invite = yield (0, utils_1.createWorkspaceInvite)(workspaceId, userId);
         res.json({ inviteId: invite.id });
     }
@@ -157,8 +163,7 @@ app.delete("/api/workspaces/invite", (req, res) => __awaiter(void 0, void 0, voi
 // Remove collaborator
 app.delete("/api/workspaces/collaborator", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { userId } = JSON.parse(req.body);
-        const workspaceId = req.headers["workspace-id"];
+        const { userId, workspaceId } = JSON.parse(req.body);
         yield (0, utils_1.removeUserFromWorkspace)(workspaceId, userId);
         res.json({ message: "Collaborator removed successfully" });
     }

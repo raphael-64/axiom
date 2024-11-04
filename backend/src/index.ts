@@ -1,7 +1,7 @@
 import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
 import { createServer } from "http";
-import { promises as fs } from 'fs';
+import { promises as fs } from "fs";
 import { Server } from "socket.io";
 import { handleConnection } from "./socketio";
 import {
@@ -29,7 +29,7 @@ interface FileMap {
 }
 
 const app: Express = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 4000;
 
 const load_files_locally = true;
 
@@ -46,22 +46,20 @@ const io = new Server(httpServer, {
   },
 });
 
-  const getFiles = async () => {
-    const files = await fetch(
-      "https://student.cs.uwaterloo.ca/~se212/files.json"
-    );
-    return await files.json();
-  };
-
-const getFile = async (filename: string) => {
-  const file = await fetch(
-    `https://student.cs.uwaterloo.ca/~se212${filename}`
-  );
-  return await file.json();
-};
-
 // Integrate the connection handler with Socket.IO
 handleConnection(io);
+
+const getFiles = async () => {
+  const files = await fetch(
+    "https://student.cs.uwaterloo.ca/~se212/files.json"
+  );
+  return await files.json();
+};
+
+const getFile = async (filename: string) => {
+  const file = await fetch(`https://student.cs.uwaterloo.ca/~se212${filename}`);
+  return await file.json();
+};
 
 // Express route
 app.get("/", (req: Request, res: Response) => {
@@ -100,11 +98,19 @@ app.put("/api/workspaces", async (req: Request, res: Response) => {
       if (load_files_locally) {
         for (const file of files) {
           let filename = file.name;
-          console.log(file.path)
-          let local_filepath = path.join(__dirname, '../..', file.path); // Adjust the path as necessary
-          const fileContent: string = await fs.readFile(local_filepath, 'utf8');
-          loaded_files.push({"name": filename, "path": local_filepath, "content": fileContent})
-          console.log({"name": filename, "path": local_filepath, "content": fileContent})
+          console.log(file.path);
+          let local_filepath = path.join(__dirname, "../..", file.path); // Adjust the path as necessary
+          const fileContent: string = await fs.readFile(local_filepath, "utf8");
+          loaded_files.push({
+            name: filename,
+            path: local_filepath,
+            content: fileContent,
+          });
+          console.log({
+            name: filename,
+            path: local_filepath,
+            content: fileContent,
+          });
         }
       } else {
         files.forEach((file: File) => {
@@ -115,12 +121,16 @@ app.put("/api/workspaces", async (req: Request, res: Response) => {
         });
       }
     }
-    console.log(`Starting workspace with files: ${files}`)
-    const workspace = await createNewWorkspace(userId, assignmentId, loaded_files);
-    console.log("Finished creating workspace")
+    console.log(`Starting workspace with files: ${files}`);
+    const workspace = await createNewWorkspace(
+      userId,
+      assignmentId,
+      loaded_files
+    );
+    console.log("Finished creating workspace");
     res.json({ workspaceId: workspace.id });
   } catch (error) {
-    res.status(500).json({ message: "Failed to create workspace", error});
+    res.status(500).json({ message: "Failed to create workspace", error });
   }
 });
 

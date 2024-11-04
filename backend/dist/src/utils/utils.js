@@ -8,16 +8,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.greet = void 0;
+exports.debouncedUpdateFile = exports.greet = void 0;
 exports.getWorkspacesForUser = getWorkspacesForUser;
 exports.createNewWorkspace = createNewWorkspace;
 exports.deleteWorkspaceById = deleteWorkspaceById;
 exports.createWorkspaceInvite = createWorkspaceInvite;
 exports.handleInviteResponse = handleInviteResponse;
 exports.removeUserFromWorkspace = removeUserFromWorkspace;
-const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
+exports.updateFileContent = updateFileContent;
+exports.upsertUser = upsertUser;
+const prisma_1 = __importDefault(require("../prisma"));
 // src/utils.ts
 const greet = (name) => {
     console.log(`Hello, ${name}!`);
@@ -26,7 +30,7 @@ const greet = (name) => {
 exports.greet = greet;
 function getWorkspacesForUser(userId) {
     return __awaiter(this, void 0, void 0, function* () {
-        return yield prisma.workspace.findMany({
+        return yield prisma_1.default.workspace.findMany({
             where: {
                 users: {
                     some: {
@@ -44,14 +48,15 @@ function getWorkspacesForUser(userId) {
 }
 function createNewWorkspace(userId, project, files) {
     return __awaiter(this, void 0, void 0, function* () {
-        return yield prisma.workspace.create({
+        yield upsertUser(userId); // Temporary upsert user, since we don't have auth yet
+        return yield prisma_1.default.workspace.create({
             data: {
                 users: {
                     connect: { id: userId }, // Include the existing user in the users array
                 },
                 project: project,
                 files: {
-                    create: files.map(file => ({
+                    create: files.map((file) => ({
                         path: file.path,
                         name: file.name,
                         content: file.content,
@@ -64,14 +69,14 @@ function createNewWorkspace(userId, project, files) {
 }
 function deleteWorkspaceById(workspaceId) {
     return __awaiter(this, void 0, void 0, function* () {
-        return yield prisma.workspace.delete({
+        return yield prisma_1.default.workspace.delete({
             where: { id: workspaceId },
         });
     });
 }
 function createWorkspaceInvite(workspaceId, userId) {
     return __awaiter(this, void 0, void 0, function* () {
-        return yield prisma.invite.create({
+        return yield prisma_1.default.invite.create({
             data: {
                 workspaceId,
                 userId,
@@ -81,12 +86,12 @@ function createWorkspaceInvite(workspaceId, userId) {
 }
 function handleInviteResponse(inviteId, accept) {
     return __awaiter(this, void 0, void 0, function* () {
-        const invite = yield prisma.invite.findUnique({
+        const invite = yield prisma_1.default.invite.findUnique({
             where: { id: inviteId },
             include: { workspace: true },
         });
         if (accept && invite) {
-            yield prisma.workspace.update({
+            yield prisma_1.default.workspace.update({
                 where: { id: invite.workspaceId },
                 data: {
                     users: {
@@ -95,20 +100,63 @@ function handleInviteResponse(inviteId, accept) {
                 },
             });
         }
-        return yield prisma.invite.delete({
+        return yield prisma_1.default.invite.delete({
             where: { id: inviteId },
         });
     });
 }
 function removeUserFromWorkspace(workspaceId, userId) {
     return __awaiter(this, void 0, void 0, function* () {
-        return yield prisma.workspace.update({
+        return yield prisma_1.default.workspace.update({
             where: { id: workspaceId },
             data: {
                 users: {
                     disconnect: { id: userId },
                 },
             },
+        });
+    });
+}
+function updateFileContent(workspaceId, path, content) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return yield prisma_1.default.file.update({
+            where: {
+                workspaceId_path: {
+                    workspaceId,
+                    path,
+                },
+            },
+            data: {
+                content,
+            },
+        });
+    });
+}
+function debounce(func, wait) {
+    let timeout;
+    return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func(...args), wait);
+    };
+}
+exports.debouncedUpdateFile = debounce((workspaceId, path, content) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield updateFileContent(workspaceId, path, content);
+    }
+    catch (error) {
+        console.error("Failed to update file in DB:", error);
+    }
+}), 500);
+function upsertUser(userId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return yield prisma_1.default.user.upsert({
+            where: {
+                id: userId,
+            },
+            create: {
+                id: userId,
+            },
+            update: {}, // no updates needed since we only have id
         });
     });
 }

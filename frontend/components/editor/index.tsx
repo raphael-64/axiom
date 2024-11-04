@@ -47,25 +47,33 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
 
   const explorerRef = useRef<ImperativePanelHandle>(null);
   const outputRef = useRef<ImperativePanelHandle>(null);
-
+  // Editor state
   const [editorRef, setEditorRef] =
     useState<monaco.editor.IStandaloneCodeEditor>();
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [manageAccessId, setManageAccessId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [georgeResponse, setGeorgeResponse] = useState<string>("");
-  const [openTabs, setOpenTabs] = useState<Tab[]>([]);
-  const [activeTabIndex, setActiveTabIndex] = useState<number>(-1);
+  const [monacoInstance, setMonacoInstance] = useState<Monaco>();
   const [monacoBinding, setMonacoBinding] = useState<MonacoBinding | null>(
     null
   );
-  const ydoc = useRef<Y.Doc>(new Y.Doc());
-  const [monacoInstance, setMonacoInstance] = useState<Monaco>();
+
+  // Tab state
+  const [openTabs, setOpenTabs] = useState<Tab[]>([]);
+  const [activeTabIndex, setActiveTabIndex] = useState<number>(-1);
+
+  // Modal state
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [manageAccessId, setManageAccessId] = useState<string | null>(null);
+
+  // George state
+  const [loading, setLoading] = useState(false);
+  const [georgeResponse, setGeorgeResponse] = useState<string>("");
+
+  // Collaboration state
+  const workspaceDocsRef = useRef<Map<string, Y.Doc>>(new Map());
   const [socket, setSocket] = useState<Socket>();
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>();
-  const workspaceDocsRef = useRef<Map<string, Y.Doc>>(new Map());
 
+  // Temporary user ID for testing
   const randomId = Math.floor(Math.random() * 900000 + 100000);
   const [tempUserId, setTempUserId] = useState<string>(
     `test_watiam_${randomId}`
@@ -139,9 +147,10 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
 
   // Initialize socket connection
   useEffect(() => {
-    const socket = io("http://localhost:3001", {
+    const socket = io("http://localhost:4000", {
       auth: {
-        userId: "user-id-here", // Get this from your auth system
+        userId: tempUserId,
+        workspaceId: activeWorkspaceId,
       },
     });
 
