@@ -1,3 +1,5 @@
+import { Workspace } from "./types";
+
 const askGeorgeUrl =
   "https://student.cs.uwaterloo.ca/~se212/george/ask-george/cgi-bin/george.cgi/check";
 
@@ -25,7 +27,7 @@ export async function getWorkspaces(userId: string) {
   return {
     success: response.ok,
     message: response.ok ? "Workspaces retrieved successfully" : data.message,
-    workspaces: response.ok ? data.workspaces : undefined,
+    workspaces: response.ok ? (data.workspaces as Workspace[]) : undefined,
   };
 }
 

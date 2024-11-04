@@ -76,7 +76,8 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
   // Temporary user ID for testing
   const randomId = Math.floor(Math.random() * 900000 + 100000);
   const [tempUserId, setTempUserId] = useState<string>(
-    `test_watiam_${randomId}`
+    // `test_watiam_${randomId}`
+    "i2dey"
   );
 
   const toggleExplorer = () => {
@@ -150,7 +151,6 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     const socket = io("http://localhost:4000", {
       auth: {
         userId: tempUserId,
-        workspaceId: activeWorkspaceId,
       },
     });
 
@@ -167,7 +167,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     return () => {
       socket.disconnect();
     };
-  }, []);
+  }, [tempUserId]);
 
   const handleEditorContent = (path: string, workspaceId?: string) => {
     if (!editorRef || !monacoInstance) return;
@@ -240,6 +240,10 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     } else {
       if (workspaceId) {
         setActiveWorkspaceId(workspaceId);
+        // Join the workspace room when opening first workspace file
+        if (!activeWorkspaceId) {
+          socket?.emit("joinRoom", { workspaceId, path });
+        }
       }
       setOpenTabs([...openTabs, { path, name, workspaceId }]);
       setActiveTabIndex(openTabs.length);
@@ -382,6 +386,14 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
             </TooltipButton>
           </div>
           <div className="flex items-center">
+            {socket?.connected ? (
+              <div className="relative size-5 mr-2 p-1 flex items-center justify-center">
+                <div className="rounded-full size-2 shrink-0 absolute animate-ping bg-green-500 opacity-75" />
+                <div className="rounded-full size-2 shrink-0 bg-green-500" />
+              </div>
+            ) : (
+              <div className="rounded-full size-2 shrink-0 bg-red-500 mr-2" />
+            )}
             <Input
               value={tempUserId}
               placeholder="Temporary User ID"

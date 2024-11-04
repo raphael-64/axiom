@@ -35,7 +35,7 @@ We use Next.js 14 + Typescript, as well as these libraries:
 Set up environment variables in `frontend/.env.local`:
 
 ```
-NEXT_PUBLIC_SERVER_URL=http://localhost:3000
+NEXT_PUBLIC_SERVER_URL=http://localhost:4000
 ```
 
 Run the frontend:

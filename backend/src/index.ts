@@ -56,11 +56,6 @@ const getFiles = async () => {
   return await files.json();
 };
 
-const getFile = async (filename: string) => {
-  const file = await fetch(`https://student.cs.uwaterloo.ca/~se212${filename}`);
-  return await file.json();
-};
-
 // Express route
 app.get("/", (req: Request, res: Response) => {
   res.send("SE212 Server");

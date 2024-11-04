@@ -41,10 +41,6 @@ const getFiles = () => __awaiter(void 0, void 0, void 0, function* () {
     const files = yield fetch("https://student.cs.uwaterloo.ca/~se212/files.json");
     return yield files.json();
 });
-const getFile = (filename) => __awaiter(void 0, void 0, void 0, function* () {
-    const file = yield fetch(`https://student.cs.uwaterloo.ca/~se212${filename}`);
-    return yield file.json();
-});
 // Express route
 app.get("/", (req, res) => {
     res.send("SE212 Server");

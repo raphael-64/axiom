@@ -8,8 +8,34 @@ export type FilesResponse = {
   files: File[];
 }[];
 
-export interface Tab {
+export type Tab = {
   name: string;
   path: string;
   workspaceId?: string;
-}
+};
+
+export type Workspace = {
+  id: string;
+  project: string;
+  createdAt: Date;
+  updatedAt: Date;
+  users: {
+    id: string;
+  }[];
+  files: {
+    path: string;
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    name: string;
+    content: string;
+    workspaceId: string;
+  }[];
+  invites: {
+    userId: string;
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    workspaceId: string;
+  }[];
+};

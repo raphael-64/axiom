@@ -1,4 +1,4 @@
-import { FilesResponse } from "@/lib/types";
+import { FilesResponse, Workspace } from "@/lib/types";
 import { useState } from "react";
 import { TooltipButton } from "@/components/tooltip-button";
 import {
@@ -167,16 +167,23 @@ export default function Explorer({
               </PopoverContent>
             </Popover>
           </div>
-          {testWorkspaces.map((folder: FilesResponse[0]) => (
-            // {workspacesData?.workspaces?.map((folder) => (
-            <FolderItem
-              key={folder.name}
-              folder={folder}
-              onFileClick={onFileClick}
-              workspaceId={folder.name}
-              openAccess={openAccess}
-            />
-          ))}
+          {/* {testWorkspaces.map((folder: FilesResponse[0]) => ( */}
+          {workspacesData &&
+          workspacesData.workspaces &&
+          workspacesData.workspaces.length > 0 ? (
+            workspacesData.workspaces?.map((workspace) => (
+              <FolderItem
+                key={workspace.id}
+                workspace={workspace}
+                onFileClick={onFileClick}
+                openAccess={openAccess}
+              />
+            ))
+          ) : (
+            <div className="text-muted-foreground text-xs px-2">
+              No workspaces found.
+            </div>
+          )}
         </div>
       </ResizablePanel>
     </ResizablePanelGroup>
@@ -186,31 +193,37 @@ export default function Explorer({
 function FolderItem({
   folder,
   onFileClick,
-  workspaceId,
+  workspace,
   openAccess,
 }: {
-  folder: FilesResponse[0];
+  folder?: FilesResponse[0];
+  workspace?: Workspace;
   onFileClick: (path: string, name: string, workspaceId?: string) => void;
-  workspaceId?: string;
   openAccess?: (workspaceId: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const name = folder ? folder.name : workspace ? workspace.project : "";
+  const files = folder
+    ? folder.files.map((file) => ({ ...file, id: file.path }))
+    : workspace
+    ? workspace.files
+    : [];
 
   return (
     <div>
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         className={`flex items-center gap-1 hover:bg-muted w-full px-2 h-6 relative ${
-          workspaceId ? "group/workspace" : ""
+          workspace ? "group/workspace" : ""
         }`}
       >
         <span className="w-4 text-xs">{isOpen ? "▼" : "▶"}</span>
-        {folder.name}
+        {name}
         <div
           tabIndex={0}
           onClick={(e) => {
             e.stopPropagation();
-            if (workspaceId) openAccess?.(workspaceId);
+            if (workspace) openAccess?.(workspace.id);
           }}
           className={`absolute right-0 top-0 h-6 w-6 flex group-hover/workspace:visible invisible items-center justify-center`}
         >
@@ -220,12 +233,12 @@ function FolderItem({
 
       {isOpen && (
         <>
-          {folder.files.map((file) => (
+          {files.map((file) => (
             <File
-              key={file.path}
+              key={file.id}
               file={file}
               onFileClick={onFileClick}
-              workspaceId={workspaceId}
+              workspaceId={workspace?.id}
             />
           ))}
         </>
