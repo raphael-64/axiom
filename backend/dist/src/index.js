@@ -166,6 +166,26 @@ app.delete("/api/workspaces/collaborator", (req, res) => __awaiter(void 0, void 
         res.status(500).json({ message: "Failed to remove collaborator" });
     }
 }));
+// Add these routes
+app.get("/api/workspaces/:id/users", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const currentUserId = req.query.userId;
+        const users = yield (0, utils_1.getWorkspaceUsers)(req.params.id, currentUserId);
+        res.json(users);
+    }
+    catch (error) {
+        res.status(500).json({ message: "Failed to fetch users" });
+    }
+}));
+app.get("/api/workspaces/:id/invites", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const invites = yield (0, utils_1.getWorkspaceInvites)(req.params.id);
+        res.json(invites);
+    }
+    catch (error) {
+        res.status(500).json({ message: "Failed to fetch invites" });
+    }
+}));
 // Start the server
 httpServer.listen(port, () => {
     console.log(`[server]: Server is running at http://localhost:${port}`);

@@ -39,3 +39,19 @@ export type Workspace = {
     workspaceId: string;
   }[];
 };
+
+export interface Collaborator {
+  id: string;
+  // Add any other user fields you need
+}
+
+export interface Invite {
+  id: string;
+  userId: string;
+  workspaceId: string;
+  createdAt: string;
+  user: {
+    id: string;
+    // Add other user fields
+  };
+}

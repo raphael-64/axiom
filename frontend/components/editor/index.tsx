@@ -382,6 +382,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
         open={!!manageAccessId}
         setOpen={(open) => setManageAccessId(open ? manageAccessId : null)}
         workspaceId={manageAccessId}
+        userId={tempUserId}
       />
       <SettingsModal open={isSettingsOpen} setOpen={setIsSettingsOpen} />
       <UploadModal open={isUploadOpen} setOpen={setIsUploadOpen} />

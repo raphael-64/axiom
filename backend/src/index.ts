@@ -11,6 +11,8 @@ import {
   createWorkspaceInvite,
   handleInviteResponse,
   removeUserFromWorkspace,
+  getWorkspaceUsers,
+  getWorkspaceInvites,
 } from "./utils/utils";
 import cors from "cors";
 import path from "path";
@@ -190,6 +192,26 @@ app.delete(
     }
   }
 );
+
+// Add these routes
+app.get("/api/workspaces/:id/users", async (req, res) => {
+  try {
+    const currentUserId = req.query.userId as string;
+    const users = await getWorkspaceUsers(req.params.id, currentUserId);
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch users" });
+  }
+});
+
+app.get("/api/workspaces/:id/invites", async (req, res) => {
+  try {
+    const invites = await getWorkspaceInvites(req.params.id);
+    res.json(invites);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch invites" });
+  }
+});
 
 // Start the server
 httpServer.listen(port, () => {

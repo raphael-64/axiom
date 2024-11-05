@@ -21,6 +21,8 @@ exports.handleInviteResponse = handleInviteResponse;
 exports.removeUserFromWorkspace = removeUserFromWorkspace;
 exports.updateFileContent = updateFileContent;
 exports.upsertUser = upsertUser;
+exports.getWorkspaceUsers = getWorkspaceUsers;
+exports.getWorkspaceInvites = getWorkspaceInvites;
 const prisma_1 = __importDefault(require("../prisma"));
 // src/utils.ts
 const greet = (name) => {
@@ -157,6 +159,23 @@ function upsertUser(userId) {
             where: { id: userId },
             create: { id: userId },
             update: {},
+        });
+    });
+}
+function getWorkspaceUsers(workspaceId, currentUserId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const workspace = yield prisma_1.default.workspace.findUnique({
+            where: { id: workspaceId },
+            include: { users: true },
+        });
+        return (workspace === null || workspace === void 0 ? void 0 : workspace.users.filter((user) => user.id !== currentUserId)) || [];
+    });
+}
+function getWorkspaceInvites(workspaceId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return yield prisma_1.default.invite.findMany({
+            where: { workspaceId },
+            include: { user: true },
         });
     });
 }

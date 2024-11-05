@@ -154,3 +154,21 @@ export async function upsertUser(userId: string) {
     update: {},
   });
 }
+
+export async function getWorkspaceUsers(
+  workspaceId: string,
+  currentUserId: string
+) {
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: workspaceId },
+    include: { users: true },
+  });
+  return workspace?.users.filter((user) => user.id !== currentUserId) || [];
+}
+
+export async function getWorkspaceInvites(workspaceId: string) {
+  return await prisma.invite.findMany({
+    where: { workspaceId },
+    include: { user: true },
+  });
+}
