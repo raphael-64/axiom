@@ -172,3 +172,16 @@ export async function getWorkspaceInvites(workspaceId: string) {
     include: { user: true },
   });
 }
+
+export async function getInvitesForUser(userId: string) {
+  return await prisma.invite.findMany({
+    where: { userId },
+    include: {
+      workspace: {
+        include: {
+          users: true,
+        },
+      },
+    },
+  });
+}

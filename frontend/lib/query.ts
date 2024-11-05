@@ -3,6 +3,7 @@ import {
   createWorkspace,
   removeCollaborator,
   deleteInvite,
+  respondToInvite,
 } from "@/lib/actions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Collaborator, Invite } from "./types";
@@ -115,5 +116,33 @@ export function useDeleteInvite() {
     onSettled: (_, __, { workspaceId }) => {
       queryClient.invalidateQueries({ queryKey: ["invites", workspaceId] });
     },
+  });
+}
+
+export function useRespondToInvite() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: { inviteId: string; accept: boolean }) =>
+      respondToInvite(data.inviteId, data.accept),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+    },
+  });
+}
+
+export const getInvitesForUser = async (userId: string) => {
+  const res = await fetch(
+    `${API_BASE_URL}/api/workspaces/invites/user/${userId}`
+  );
+  if (!res.ok) throw new Error("Failed to fetch user invites");
+  return res.json();
+};
+
+export function useUserInvites(userId: string) {
+  return useQuery({
+    queryKey: ["invites", userId],
+    queryFn: () => getInvitesForUser(userId),
+    enabled: !!userId,
   });
 }

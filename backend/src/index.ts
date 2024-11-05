@@ -13,9 +13,11 @@ import {
   removeUserFromWorkspace,
   getWorkspaceUsers,
   getWorkspaceInvites,
+  getInvitesForUser,
 } from "./utils/utils";
 import cors from "cors";
 import path from "path";
+import { PrismaClient } from "@prisma/client";
 
 dotenv.config();
 
@@ -210,6 +212,16 @@ app.get("/api/workspaces/:id/invites", async (req, res) => {
     res.json(invites);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch invites" });
+  }
+});
+
+// Add this route
+app.get("/api/workspaces/invites/user/:userId", async (req, res) => {
+  try {
+    const invites = await getInvitesForUser(req.params.userId);
+    res.json(invites);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch user invites" });
   }
 });
 

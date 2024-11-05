@@ -186,6 +186,16 @@ app.get("/api/workspaces/:id/invites", (req, res) => __awaiter(void 0, void 0, v
         res.status(500).json({ message: "Failed to fetch invites" });
     }
 }));
+// Add this route
+app.get("/api/workspaces/invites/user/:userId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const invites = yield (0, utils_1.getInvitesForUser)(req.params.userId);
+        res.json(invites);
+    }
+    catch (error) {
+        res.status(500).json({ message: "Failed to fetch user invites" });
+    }
+}));
 // Start the server
 httpServer.listen(port, () => {
     console.log(`[server]: Server is running at http://localhost:${port}`);

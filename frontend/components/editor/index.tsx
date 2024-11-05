@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/resizable";
 import { TooltipButton } from "@/components/tooltip-button";
 import { Input } from "@/components/ui/input";
-import { PanelBottom, PanelLeft, Settings, X } from "lucide-react";
+import { Bell, PanelBottom, PanelLeft, Settings, X } from "lucide-react";
 
 // Local components
 import Explorer from "./explorer";
@@ -36,6 +36,7 @@ import { toast } from "sonner";
 // Collaboration
 import * as Y from "yjs";
 import { Socket, io } from "socket.io-client";
+import { Button } from "../ui/button";
 
 const sizes = {
   min: 140,
@@ -384,7 +385,11 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
         workspaceId={manageAccessId}
         userId={tempUserId}
       />
-      <SettingsModal open={isSettingsOpen} setOpen={setIsSettingsOpen} />
+      <SettingsModal
+        open={isSettingsOpen}
+        setOpen={setIsSettingsOpen}
+        userId={tempUserId}
+      />
       <UploadModal open={isUploadOpen} setOpen={setIsUploadOpen} />
       <div className="w-full h-full flex flex-col">
         <div className="w-full flex items-center justify-between border-b p-1.5 px-2">
@@ -402,17 +407,18 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
           </div>
           <div className="flex items-center">
             {socket?.connected ? (
-              <div className="relative size-5 mr-2 p-1 flex items-center justify-center">
+              <div className="relative size-5 p-1 flex items-center justify-center">
                 <div className="rounded-full size-2 shrink-0 absolute animate-ping bg-green-500 opacity-75" />
                 <div className="rounded-full size-2 shrink-0 bg-green-500" />
               </div>
             ) : (
-              <div className="rounded-full size-2 shrink-0 bg-red-500 mr-2" />
+              <div className="rounded-full size-2 shrink-0 bg-red-500" />
             )}
             <Input
               value={tempUserId}
               placeholder="Temporary User ID"
               onChange={(e) => setTempUserId(e.target.value)}
+              className="mx-2"
             />
             <TooltipButton
               variant="ghost"
@@ -430,7 +436,6 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
             >
               <PanelBottom />
             </TooltipButton>
-
             <TooltipButton
               variant="ghost"
               size="smIcon"

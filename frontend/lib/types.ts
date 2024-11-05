@@ -55,3 +55,7 @@ export interface Invite {
     // Add other user fields
   };
 }
+
+export type InviteWithWorkspace = Invite & {
+  workspace: Workspace;
+};

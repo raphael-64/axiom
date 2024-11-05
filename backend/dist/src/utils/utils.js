@@ -23,6 +23,7 @@ exports.updateFileContent = updateFileContent;
 exports.upsertUser = upsertUser;
 exports.getWorkspaceUsers = getWorkspaceUsers;
 exports.getWorkspaceInvites = getWorkspaceInvites;
+exports.getInvitesForUser = getInvitesForUser;
 const prisma_1 = __importDefault(require("../prisma"));
 // src/utils.ts
 const greet = (name) => {
@@ -176,6 +177,20 @@ function getWorkspaceInvites(workspaceId) {
         return yield prisma_1.default.invite.findMany({
             where: { workspaceId },
             include: { user: true },
+        });
+    });
+}
+function getInvitesForUser(userId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return yield prisma_1.default.invite.findMany({
+            where: { userId },
+            include: {
+                workspace: {
+                    include: {
+                        users: true,
+                    },
+                },
+            },
         });
     });
 }
