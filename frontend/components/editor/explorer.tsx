@@ -144,18 +144,21 @@ export default function Explorer({
                 </Select>
                 <Button
                   onClick={() => {
-                    createWorkspaceMutation.mutate(userId, {
-                      onSuccess: (data) => {
-                        if (data.success) {
-                          toast.success(data.message);
-                        } else {
-                          toast.error(data.message);
-                        }
-                      },
-                      onError: () => {
-                        toast.error("Failed to create workspace");
-                      },
-                    });
+                    createWorkspaceMutation.mutate(
+                      { userId, assignmentId: createWorkspaceFolder },
+                      {
+                        onSuccess: (data) => {
+                          if (data.success) {
+                            toast.success(data.message);
+                          } else {
+                            toast.error(data.message);
+                          }
+                        },
+                        onError: () => {
+                          toast.error("Failed to create workspace");
+                        },
+                      }
+                    );
                   }}
                   disabled={!createWorkspaceFolder}
                   className="w-full mt-2"

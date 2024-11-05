@@ -48,7 +48,9 @@ function getWorkspacesForUser(userId) {
 }
 function createNewWorkspace(userId, project, files) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield upsertUser(userId); // Temporary upsert user, since we don't have auth yet
+        if (!userId)
+            throw new Error("userId is required");
+        yield upsertUser(userId);
         return yield prisma_1.default.workspace.create({
             data: {
                 users: {
@@ -149,14 +151,12 @@ exports.debouncedUpdateFile = debounce((workspaceId, path, content) => __awaiter
 }), 500);
 function upsertUser(userId) {
     return __awaiter(this, void 0, void 0, function* () {
+        if (!userId)
+            throw new Error("userId is required");
         return yield prisma_1.default.user.upsert({
-            where: {
-                id: userId,
-            },
-            create: {
-                id: userId,
-            },
-            update: {}, // no updates needed since we only have id
+            where: { id: userId },
+            create: { id: userId },
+            update: {},
         });
     });
 }

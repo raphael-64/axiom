@@ -58,6 +58,7 @@ app.get("/api/workspaces", (req, res) => __awaiter(void 0, void 0, void 0, funct
 }));
 // Create workspace
 app.put("/api/workspaces", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("Creating workspace", req.body);
     try {
         const { userId, assignmentId } = req.body;
         const files_map = yield getFiles(); // Await the result of getFiles
@@ -75,7 +76,7 @@ app.put("/api/workspaces", (req, res) => __awaiter(void 0, void 0, void 0, funct
                 for (const file of files) {
                     let filename = file.name;
                     console.log(file.path);
-                    let local_filepath = path_1.default.join(__dirname, "../..", file.path); // Adjust the path as necessary
+                    let local_filepath = path_1.default.join(__dirname, "../../george", file.path); // Adjust the path as necessary
                     const fileContent = yield fs_1.promises.readFile(local_filepath, "utf8");
                     loaded_files.push({
                         name: filename,
@@ -104,6 +105,7 @@ app.put("/api/workspaces", (req, res) => __awaiter(void 0, void 0, void 0, funct
         res.json({ workspaceId: workspace.id });
     }
     catch (error) {
+        console.error("Failed to create workspace", error);
         res.status(500).json({ message: "Failed to create workspace", error });
     }
 }));

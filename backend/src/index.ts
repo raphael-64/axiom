@@ -74,6 +74,7 @@ app.get("/api/workspaces", async (req: Request, res: Response) => {
 
 // Create workspace
 app.put("/api/workspaces", async (req: Request, res: Response) => {
+  console.log("Creating workspace", req.body);
   try {
     const { userId, assignmentId } = req.body;
     const files_map = await getFiles(); // Await the result of getFiles
@@ -91,7 +92,7 @@ app.put("/api/workspaces", async (req: Request, res: Response) => {
         for (const file of files) {
           let filename = file.name;
           console.log(file.path);
-          let local_filepath = path.join(__dirname, "../..", file.path); // Adjust the path as necessary
+          let local_filepath = path.join(__dirname, "../../george", file.path); // Adjust the path as necessary
           const fileContent: string = await fs.readFile(local_filepath, "utf8");
           loaded_files.push({
             name: filename,
@@ -122,6 +123,7 @@ app.put("/api/workspaces", async (req: Request, res: Response) => {
     console.log("Finished creating workspace");
     res.json({ workspaceId: workspace.id });
   } catch (error) {
+    console.error("Failed to create workspace", error);
     res.status(500).json({ message: "Failed to create workspace", error });
   }
 });

@@ -20,7 +20,12 @@ WORKSPACE ACTIONS
 
 export async function getWorkspaces(userId: string) {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/workspaces?userId=${userId}`
+    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/workspaces?userId=${userId}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
   );
   const data = await response.json();
 
@@ -31,12 +36,16 @@ export async function getWorkspaces(userId: string) {
   };
 }
 
-export async function createWorkspace(userId: string) {
+export async function createWorkspace(userId: string, assignmentId: string) {
+  console.log("Creating workspace", userId, assignmentId);
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_SERVER_URL}/api/workspaces`,
     {
       method: "PUT",
-      body: JSON.stringify({ userId }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ userId, assignmentId }),
     }
   );
   const data = await response.json();
@@ -53,6 +62,9 @@ export async function deleteWorkspace(workspaceId: string) {
     `${process.env.NEXT_PUBLIC_SERVER_URL}/api/workspaces`,
     {
       method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ workspaceId }),
     }
   );
@@ -69,6 +81,9 @@ export async function inviteToWorkspace(userId: string, workspaceId: string) {
     `${process.env.NEXT_PUBLIC_SERVER_URL}/api/workspaces/invite`,
     {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ userId, workspaceId }),
     }
   );
@@ -86,6 +101,9 @@ export async function respondToInvite(inviteId: string, accept: boolean) {
     `${process.env.NEXT_PUBLIC_SERVER_URL}/api/workspaces/invite/accept`,
     {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ inviteId, accept }),
     }
   );
@@ -104,6 +122,9 @@ export async function deleteInvite(inviteId: string) {
     `${process.env.NEXT_PUBLIC_SERVER_URL}/api/workspaces/invite`,
     {
       method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ inviteId }),
     }
   );
@@ -119,6 +140,9 @@ export async function removeCollaborator(userId: string, workspaceId: string) {
     `${process.env.NEXT_PUBLIC_SERVER_URL}/api/workspaces/collaborator`,
     {
       method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ userId, workspaceId }),
     }
   );

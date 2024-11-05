@@ -28,7 +28,9 @@ export async function createNewWorkspace(
   project: string,
   files: { path: string; name: string; content: string }[]
 ) {
-  await upsertUser(userId); // Temporary upsert user, since we don't have auth yet
+  if (!userId) throw new Error("userId is required");
+
+  await upsertUser(userId);
 
   return await prisma.workspace.create({
     data: {
@@ -144,13 +146,11 @@ export const debouncedUpdateFile = debounce(
 );
 
 export async function upsertUser(userId: string) {
+  if (!userId) throw new Error("userId is required");
+
   return await prisma.user.upsert({
-    where: {
-      id: userId,
-    },
-    create: {
-      id: userId,
-    },
-    update: {}, // no updates needed since we only have id
+    where: { id: userId },
+    create: { id: userId },
+    update: {},
   });
 }

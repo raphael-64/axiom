@@ -12,7 +12,8 @@ export function useCreateWorkspace() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (userId: string) => createWorkspace(userId),
+    mutationFn: (data: { userId: string; assignmentId: string }) =>
+      createWorkspace(data.userId, data.assignmentId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workspaces"] });
     },
