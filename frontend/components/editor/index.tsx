@@ -1,7 +1,7 @@
 "use client";
 
 // React and hooks
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useWindowSize } from "@uidotdev/usehooks";
 
 // Monaco editor
@@ -58,6 +58,13 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
   // Tab state
   const [openTabs, setOpenTabs] = useState<Tab[]>([]);
   const [activeTabIndex, setActiveTabIndex] = useState<number>(-1);
+  const activeId = useMemo(() => {
+    if (activeTabIndex >= 0 && openTabs[activeTabIndex]) {
+      const workspaceId = openTabs[activeTabIndex].workspaceId;
+      return workspaceId ?? openTabs[activeTabIndex].path;
+    }
+    return undefined;
+  }, [activeTabIndex, openTabs]);
 
   // Modal state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -172,6 +179,8 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
   const handleEditorContent = (path: string, workspaceId?: string) => {
     if (!editorRef || !monacoInstance) return;
 
+    console.log("handleEditorContent", path, workspaceId);
+
     // Clean up previous binding
     monacoBinding?.destroy();
 
@@ -185,8 +194,15 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
 
       const ytext = doc.getText("content");
 
-      // Connect to room
-      socket?.emit("joinRoom", { workspaceId, path });
+      // Only join room if this is the first tab for this workspace
+      const hasOtherWorkspaceTabs = openTabs.some(
+        (tab) => tab.workspaceId === workspaceId && tab.path !== path
+      );
+      console.log("hasOtherWorkspaceTabs", hasOtherWorkspaceTabs);
+      if (!hasOtherWorkspaceTabs) {
+        console.log("joining room");
+        socket?.emit("joinRoom", { workspaceId, path });
+      }
 
       const model = monacoInstance.editor.createModel("", "george");
       editorRef.setModel(model);
@@ -238,17 +254,10 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     if (existingIndex >= 0) {
       setActiveTabIndex(existingIndex);
     } else {
-      if (workspaceId) {
-        setActiveWorkspaceId(workspaceId);
-        // Join the workspace room when opening first workspace file
-        if (!activeWorkspaceId) {
-          socket?.emit("joinRoom", { workspaceId, path });
-        }
-      }
+      if (workspaceId) setActiveWorkspaceId(workspaceId);
       setOpenTabs([...openTabs, { path, name, workspaceId }]);
       setActiveTabIndex(openTabs.length);
     }
-    handleEditorContent(path, workspaceId);
   };
 
   // Clean up when closing tabs
@@ -265,7 +274,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
         );
         if (!hasOtherWorkspaceTabs) {
           setActiveWorkspaceId(undefined);
-          socket?.disconnect();
+          socket?.emit("leaveRoom", { workspaceId: closingTab.workspaceId });
           workspaceDocsRef.current.delete(closingTab.path);
         }
       }
@@ -277,22 +286,12 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
             ? indexToClose - 1
             : indexToClose;
         if (newIndex >= 0 && newTabs[newIndex]) {
-          setTimeout(() => {
-            setActiveTabIndex(newIndex);
-            handleEditorContent(
-              newTabs[newIndex].path,
-              newTabs[newIndex].workspaceId
-            );
-          }, 0);
+          setActiveTabIndex(newIndex);
         } else {
           setActiveTabIndex(-1);
         }
       } else if (indexToClose < activeTabIndex) {
-        setTimeout(() => {
-          setActiveTabIndex(activeTabIndex - 1);
-          const tab = newTabs[activeTabIndex - 1];
-          handleEditorContent(tab.path, tab.workspaceId);
-        }, 0);
+        setActiveTabIndex(activeTabIndex - 1);
       }
 
       return newTabs;
@@ -312,9 +311,10 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
 
   useEffect(() => {
     if (activeTabIndex >= 0 && openTabs[activeTabIndex]) {
-      handleEditorContent(openTabs[activeTabIndex].path);
+      const tab = openTabs[activeTabIndex];
+      handleEditorContent(tab.path, tab.workspaceId);
     }
-  }, [activeTabIndex]);
+  }, [activeId]);
 
   if (!width) return null;
 

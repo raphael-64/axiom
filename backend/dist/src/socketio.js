@@ -50,7 +50,8 @@ const handleConnection = (io) => {
             return;
         }
         console.log(`New connection: ${socket.id} (User: ${userId})`);
-        socket.on("joinRoom", (_a) => __awaiter(void 0, [_a], void 0, function* ({ workspaceId, path }) {
+        socket.on("joinRoom", (_a) => __awaiter(void 0, [_a], void 0, function* ({ workspaceId }) {
+            console.log("joinRoom", workspaceId);
             // Check if user has permission to access this workspace
             if (!(yield checkUserAccess(userId, workspaceId))) {
                 socket.emit("error", "Unauthorized access to workspace");
@@ -63,27 +64,42 @@ const handleConnection = (io) => {
             // Get workspace and add client
             const workspace = workspaces.get(workspaceId);
             workspace.clients.set(socket.id, userId);
-            // Join socket.io room for this workspace+file
-            const roomId = `${workspaceId}:${path}`;
+            // Join socket.io room for this workspace
+            const roomId = `${workspaceId}`;
             socket.join(roomId);
-            // Create new Y.Doc for this file if needed
-            if (!workspace.doc.has(path)) {
-                workspace.doc.set(path, new Y.Doc());
+            // Get workspace files from database
+            const workspaceFiles = yield prisma_1.default.file.findMany({
+                where: { workspaceId },
+            });
+            // Create Y.Doc for each file if needed
+            for (const file of workspaceFiles) {
+                if (!workspace.doc.has(file.path)) {
+                    const doc = new Y.Doc();
+                    // Initialize doc with content from DB
+                    const ytext = doc.getText("content");
+                    ytext.insert(0, file.content);
+                    workspace.doc.set(file.path, doc);
+                }
+                // Get Y.Doc instance for this file
+                const docData = workspace.doc.get(file.path);
+                // Send current document state to new client
+                const update = Y.encodeStateAsUpdate(docData);
+                socket.emit("sync", {
+                    path: file.path,
+                    update: Buffer.from(update).toString("base64"),
+                });
+                // Notify other clients that a new user joined
+                socket.to(roomId).emit("user-joined", {
+                    userId,
+                    path: file.path,
+                });
             }
-            // Get the Y.Doc instance
-            const docData = workspace.doc.get(path);
-            // Send current document state to new client
-            const update = Y.encodeStateAsUpdate(docData);
-            socket.emit("sync", {
-                path,
-                update: Buffer.from(update).toString("base64"),
-            });
-            // Notify other clients in room that a new user joined
-            socket.to(roomId).emit("user-joined", {
-                userId,
-                path,
-            });
         }));
+        socket.on("leaveRoom", ({ workspaceId }) => {
+            console.log("leaveRoom", workspaceId);
+            socket.leave(workspaceId);
+            handleLeaveRoom(socket, workspaceId, userId);
+        });
         // Handle document updates from clients
         socket.on("doc-update", ({ workspaceId, path, update }) => {
             // Get the workspace data structure
@@ -109,30 +125,12 @@ const handleConnection = (io) => {
             const workspaceId = Array.from(socket.rooms).find((room) => workspaces.has(room));
             // Delete client from workspace
             if (workspaceId && workspaces.has(workspaceId)) {
-                const workspace = workspaces.get(workspaceId);
-                workspace.clients.delete(socket.id);
-                // Notify others that user left
-                socket.to(workspaceId).emit("user-left", {
-                    userId,
-                });
-                // Delete workspace in memory if no connected clients left
-                if (workspace.clients.size === 0) {
-                    workspace.doc.forEach((doc, path) => {
-                        workspace.doc.delete(path);
-                    });
-                    workspaces.delete(workspaceId); // Delete workspace in memory
-                }
+                handleLeaveRoom(socket, workspaceId, userId);
             }
         }));
     }));
 };
 exports.handleConnection = handleConnection;
-/**
- * Checks if a user has access to a workspace by checking if they are a member
- * @param userId - The ID of the user to check
- * @param workspaceId - The ID of the workspace to check access for
- * @returns True if user has access, false otherwise
- */
 function checkUserAccess(userId, workspaceId) {
     return __awaiter(this, void 0, void 0, function* () {
         const workspace = yield prisma_1.default.workspace.findFirst({
@@ -146,5 +144,24 @@ function checkUserAccess(userId, workspaceId) {
             },
         });
         return workspace !== null;
+    });
+}
+function handleLeaveRoom(socket, workspaceId, userId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const workspace = workspaces.get(workspaceId);
+        if (!workspace)
+            return;
+        workspace.clients.delete(socket.id);
+        // Notify others that user left
+        socket.to(workspaceId).emit("user-left", {
+            userId,
+        });
+        // Delete workspace in memory if no connected clients left
+        if (workspace.clients.size === 0) {
+            workspace.doc.forEach((doc, path) => {
+                workspace.doc.delete(path);
+            });
+            workspaces.delete(workspaceId); // Delete workspace in memory
+        }
     });
 }
