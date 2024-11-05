@@ -400,7 +400,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
               size="sm"
               onClick={handleAskGeorge}
               tooltip="Ask George (⌘G)"
-              disabled={loading}
+              disabled={loading || activeTabIndex === -1}
             >
               {loading ? "Asking George..." : "Ask George"}
             </TooltipButton>
