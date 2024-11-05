@@ -19,10 +19,10 @@ model Workspace {
   id        String   @id @default(uuid())
   users     User[]
   project   String
-  files     File[]
+  files     File[]   @relation("WorkspaceToFiles")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  invites   Invite[]
+  invites   Invite[] @relation("WorkspaceToInvites")
 }
 
 model File {
@@ -30,16 +30,17 @@ model File {
   path        String
   name        String
   content     String
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  workspace   Workspace @relation("WorkspaceToFiles", fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
   @@unique([workspaceId, path])
 }
 
 model Invite {
   id          String    @id @default(uuid())
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  workspace   Workspace @relation("WorkspaceToInvites", fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId String
   userId      String
   user        User      @relation(fields: [userId], references: [id])

@@ -176,36 +176,51 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     };
   }, [tempUserId]);
 
-  const handleEditorContent = (path: string, workspaceId?: string) => {
+  const handleEditorContent = async (path: string, workspaceId?: string) => {
     if (!editorRef || !monacoInstance) return;
 
-    console.log("handleEditorContent", path, workspaceId);
-
-    // Clean up previous binding
+    // Cleanup previous
     monacoBinding?.destroy();
 
     if (workspaceId) {
-      // Collaborative workspace file
-      let doc = workspaceDocsRef.current.get(path);
-      if (!doc) {
-        doc = new Y.Doc();
-        workspaceDocsRef.current.set(path, doc);
+      // Prevent multiple workspace connections
+      if (activeWorkspaceId && activeWorkspaceId !== workspaceId) {
+        toast.error("Close files from other workspace first");
+        return;
       }
 
-      const ytext = doc.getText("content");
+      // Join room with specific file path
+      socket?.emit("joinRoom", { workspaceId, path });
 
-      // Only join room if this is the first tab for this workspace
-      const hasOtherWorkspaceTabs = openTabs.some(
-        (tab) => tab.workspaceId === workspaceId && tab.path !== path
-      );
-      console.log("hasOtherWorkspaceTabs", hasOtherWorkspaceTabs);
-      if (!hasOtherWorkspaceTabs) {
-        console.log("joining room");
-        socket?.emit("joinRoom", { workspaceId, path });
-      }
-
+      // Setup model first
       const model = monacoInstance.editor.createModel("", "george");
       editorRef.setModel(model);
+
+      // Initialize doc
+      const doc = new Y.Doc();
+      const ytext = doc.getText("content");
+      workspaceDocsRef.current.set(path, doc);
+
+      // Request initial content and wait for both sync and content
+      const [syncData, fileContent] = await Promise.all([
+        new Promise<string>((resolve) => {
+          socket?.once("sync", (update) => resolve(update));
+        }),
+        new Promise<string>((resolve) => {
+          socket?.emit("requestFileContent", { workspaceId, path });
+          socket?.once("fileContent", ({ content }) => resolve(content));
+        }),
+      ]);
+
+      // Apply initial state
+      Y.applyUpdate(doc, Buffer.from(syncData, "base64"));
+
+      // Double check content matches
+      const currentContent = ytext.toString();
+      if (currentContent !== fileContent) {
+        ytext.delete(0, ytext.length);
+        ytext.insert(0, fileContent);
+      }
 
       const binding = new MonacoBinding(
         ytext,
@@ -213,25 +228,25 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
         new Set([editorRef]),
         null
       );
-
       setMonacoBinding(binding);
 
-      // Handle updates from server
-      socket?.on(`doc-update-${path}`, (update: Uint8Array) => {
-        Y.applyUpdate(doc, update);
+      // Handle updates
+      socket?.on(`doc-update-${path}`, (update: string) => {
+        Y.applyUpdate(doc, Buffer.from(update, "base64"));
       });
 
-      // Send updates to server
       doc.on("update", (update: Uint8Array) => {
-        socket?.emit("doc-update", { workspaceId, path, update });
+        socket?.emit("doc-update", {
+          workspaceId,
+          path,
+          update: Buffer.from(update).toString("base64"),
+        });
       });
     } else {
-      // Local file
       const content = localStorage.getItem(path) || "";
       const model = monacoInstance.editor.createModel(content, "george");
       editorRef.setModel(model);
 
-      // Set up change listener for localStorage
       model.onDidChangeContent(() => {
         localStorage.setItem(path, model.getValue());
       });
@@ -267,15 +282,15 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     setOpenTabs((prevTabs) => {
       const newTabs = prevTabs.filter((_, i) => i !== indexToClose);
 
-      // If closing last workspace tab, clean up workspace
+      // Clean up workspace doc and connection if needed
       if (closingTab.workspaceId) {
+        workspaceDocsRef.current.delete(closingTab.path);
         const hasOtherWorkspaceTabs = newTabs.some(
           (tab) => tab.workspaceId === closingTab.workspaceId
         );
         if (!hasOtherWorkspaceTabs) {
           setActiveWorkspaceId(undefined);
           socket?.emit("leaveRoom", { workspaceId: closingTab.workspaceId });
-          workspaceDocsRef.current.delete(closingTab.path);
         }
       }
 
@@ -301,9 +316,8 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
   // Clean up on unmount
   useEffect(() => {
     return () => {
-      if (socket?.connected) {
-        socket.disconnect();
-      }
+      socket?.disconnect();
+      workspaceDocsRef.current.forEach((doc) => doc.destroy());
       workspaceDocsRef.current.clear();
       monacoBinding?.destroy();
     };

@@ -80,6 +80,7 @@ export default function Explorer({
     useState<string>("");
   const { data: workspacesData } = useWorkspaces(userId);
   const createWorkspaceMutation = useCreateWorkspace();
+  const [createOpen, setCreateOpen] = useState(false);
 
   const createOptions = useMemo(() => {
     if (!workspacesData?.workspaces) return [];
@@ -90,7 +91,7 @@ export default function Explorer({
 
   return (
     <ResizablePanelGroup direction="vertical">
-      <ResizablePanel defaultSize={75}>
+      <ResizablePanel defaultSize={60}>
         <div className="py-2 overflow-y-auto text-sm">
           <div className="flex items-center justify-between mb-1 px-2">
             <div className="font-semibold text-xs text-muted-foreground">
@@ -117,13 +118,13 @@ export default function Explorer({
         </div>
       </ResizablePanel>
       <ResizableHandle />
-      <ResizablePanel defaultSize={25} minSize={10} maxSize={50}>
+      <ResizablePanel defaultSize={40} minSize={10} maxSize={50}>
         <div className="py-2 overflow-y-auto text-sm">
           <div className="flex items-center justify-between mb-1 px-2">
             <div className="font-semibold text-xs text-muted-foreground">
               Workspaces
             </div>
-            <Popover>
+            <Popover open={createOpen} onOpenChange={setCreateOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="ghost"
@@ -158,6 +159,7 @@ export default function Explorer({
                         onSuccess: (data) => {
                           if (data.success) {
                             toast.success(data.message);
+                            setCreateOpen(false);
                           } else {
                             toast.error(data.message);
                           }

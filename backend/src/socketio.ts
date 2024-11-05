@@ -6,8 +6,15 @@ import { debouncedUpdateFile } from "@utils/utils";
 
 // Data structure for a workspace
 interface Workspace {
-  doc: Map<string, Y.Doc>;
-  clients: Map<string, string>;
+  docs: Map<
+    string,
+    {
+      yDoc: Y.Doc;
+      content: string;
+      lastSaved: number;
+    }
+  >;
+  clients: Set<string>;
 }
 
 // Map of all workspaces
@@ -25,58 +32,52 @@ export const handleConnection = (io: Server) => {
 
     console.log(`New connection: ${socket.id} (User: ${userId})`);
 
-    socket.on("joinRoom", async ({ workspaceId }) => {
+    socket.on("joinRoom", async ({ workspaceId, path }) => {
       console.log("joinRoom", workspaceId);
       // Check if user has permission to access this workspace
       if (!(await checkUserAccess(userId, workspaceId))) {
-        socket.emit("error", "Unauthorized access to workspace");
+        socket.emit("error", "Unauthorized access");
         return;
       }
 
-      // Create new workspace data structure if it doesn't exist
+      // Initialize workspace if needed
       if (!workspaces.has(workspaceId)) {
-        workspaces.set(workspaceId, { doc: new Map(), clients: new Map() });
+        workspaces.set(workspaceId, {
+          docs: new Map(),
+          clients: new Set(),
+        });
       }
 
-      // Get workspace and add client
       const workspace = workspaces.get(workspaceId)!;
-      workspace.clients.set(socket.id, userId);
+      workspace.clients.add(socket.id);
+      socket.join(workspaceId);
 
-      // Join socket.io room for this workspace
-      const roomId = `${workspaceId}`;
-      socket.join(roomId);
+      // Only load requested file
+      if (!workspace.docs.has(path)) {
+        const file = await prisma.file.findFirst({
+          where: { workspaceId, path },
+        });
 
-      // Get workspace files from database
-      const workspaceFiles = await prisma.file.findMany({
-        where: { workspaceId },
-      });
-
-      // Create Y.Doc for each file if needed
-      for (const file of workspaceFiles) {
-        if (!workspace.doc.has(file.path)) {
-          const doc = new Y.Doc();
-          // Initialize doc with content from DB
-          const ytext = doc.getText("content");
-          ytext.insert(0, file.content);
-          workspace.doc.set(file.path, doc);
+        if (!file) {
+          socket.emit("error", "File not found");
+          return;
         }
 
-        // Get Y.Doc instance for this file
-        const docData = workspace.doc.get(file.path)!;
+        const yDoc = new Y.Doc();
+        const ytext = yDoc.getText("content");
+        ytext.insert(0, file.content);
 
-        // Send current document state to new client
-        const update = Y.encodeStateAsUpdate(docData);
-        socket.emit("sync", {
-          path: file.path,
-          update: Buffer.from(update).toString("base64"),
-        });
-
-        // Notify other clients that a new user joined
-        socket.to(roomId).emit("user-joined", {
-          userId,
-          path: file.path,
+        workspace.docs.set(path, {
+          yDoc,
+          content: file.content,
+          lastSaved: Date.now(),
         });
       }
+
+      // Send current doc state
+      const docData = workspace.docs.get(path)!;
+      const update = Y.encodeStateAsUpdate(docData.yDoc);
+      socket.emit("sync", Buffer.from(update).toString("base64"));
     });
 
     socket.on("leaveRoom", ({ workspaceId }) => {
@@ -87,25 +88,38 @@ export const handleConnection = (io: Server) => {
 
     // Handle document updates from clients
     socket.on("doc-update", ({ workspaceId, path, update }) => {
-      // Get the workspace data structure
+      const workspace = workspaces.get(workspaceId);
+      if (!workspace?.docs.has(path)) return;
+
+      const docData = workspace.docs.get(path)!;
+      const binaryUpdate = Buffer.from(update, "base64");
+
+      Y.applyUpdate(docData.yDoc, binaryUpdate);
+      const newContent = docData.yDoc.getText("content").toString();
+
+      // Only save if content actually changed
+      if (newContent !== docData.content) {
+        docData.content = newContent;
+        docData.lastSaved = Date.now();
+        console.log("saving file", workspaceId, path, newContent);
+        debouncedUpdateFile(workspaceId, path, newContent);
+      }
+
+      socket.to(workspaceId).emit(`doc-update-${path}`, update);
+    });
+
+    socket.on("requestFileContent", ({ workspaceId, path }) => {
       const workspace = workspaces.get(workspaceId);
       if (!workspace) return;
 
-      // Get the Y.Doc for this file path
-      const docData = workspace.doc.get(path);
+      const docData = workspace.docs.get(path);
       if (!docData) return;
 
-      // Convert base64 update to binary and apply to Y.Doc
-      const binaryUpdate = Buffer.from(update, "base64");
-      Y.applyUpdate(docData, binaryUpdate);
-
-      // Get the current document content and save to disk
-      const content = docData.getText("content").toString();
-      debouncedUpdateFile(workspaceId, path, content);
-
-      // Broadcast update to all other clients in the room
-      const roomId = `${workspaceId}:${path}`;
-      socket.to(roomId).emit(`doc-update-${path}`, update);
+      const content = docData.yDoc.getText("content").toString();
+      socket.emit("fileContent", {
+        path,
+        content,
+      });
     });
 
     socket.on("disconnect", async () => {
@@ -155,8 +169,8 @@ async function handleLeaveRoom(
 
   // Delete workspace in memory if no connected clients left
   if (workspace.clients.size === 0) {
-    workspace.doc.forEach((doc, path) => {
-      workspace.doc.delete(path);
+    workspace.docs.forEach((doc, path) => {
+      workspace.docs.delete(path);
     });
 
     workspaces.delete(workspaceId); // Delete workspace in memory
