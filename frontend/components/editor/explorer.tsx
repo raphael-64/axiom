@@ -1,5 +1,5 @@
 import { FilesResponse, Workspace } from "@/lib/types";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { TooltipButton } from "@/components/tooltip-button";
 import {
   Download,
@@ -81,6 +81,13 @@ export default function Explorer({
   const { data: workspacesData } = useWorkspaces(userId);
   const createWorkspaceMutation = useCreateWorkspace();
 
+  const createOptions = useMemo(() => {
+    if (!workspacesData?.workspaces) return [];
+
+    const existingProjects = workspacesData.workspaces.map((w) => w.project);
+    return files.filter((folder) => !existingProjects.includes(folder.name));
+  }, [files, workspacesData]);
+
   return (
     <ResizablePanelGroup direction="vertical">
       <ResizablePanel defaultSize={75}>
@@ -122,6 +129,7 @@ export default function Explorer({
                   variant="ghost"
                   size="xsIcon"
                   className="!text-muted-foreground"
+                  disabled={createOptions.length === 0}
                 >
                   <Plus className="!size-3" />
                 </Button>
@@ -135,7 +143,7 @@ export default function Explorer({
                     <SelectValue placeholder="Select Folder" />
                   </SelectTrigger>
                   <SelectContent>
-                    {files.map((option) => (
+                    {createOptions.map((option) => (
                       <SelectItem key={option.name} value={option.name}>
                         {option.name}
                       </SelectItem>
