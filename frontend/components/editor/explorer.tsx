@@ -40,8 +40,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useWorkspaces, useCreateWorkspace } from "@/lib/query";
+import {
+  useWorkspaces,
+  useCreateWorkspace,
+  useDeleteWorkspace,
+} from "@/lib/query";
 import { toast } from "sonner";
+import ConfirmModal from "./confirm";
 
 const testWorkspaces: FilesResponse = [
   {
@@ -218,12 +223,31 @@ function FolderItem({
   const [isOpen, setIsOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const name = folder ? folder.name : workspace ? workspace.project : "";
   const files = folder
     ? folder.files.map((file) => ({ ...file, id: file.path }))
     : workspace
     ? workspace.files
     : [];
+  const deleteWorkspaceMutation = useDeleteWorkspace();
+
+  const handleDeleteWorkspace = () => {
+    if (!workspace) return;
+
+    deleteWorkspaceMutation.mutate(workspace.id, {
+      onSuccess: (data) => {
+        if (data.success) {
+          toast.success(data.message);
+        } else {
+          toast.error(data.message);
+        }
+      },
+      onError: () => {
+        toast.error("Failed to delete workspace");
+      },
+    });
+  };
 
   if (!workspace)
     return (
@@ -250,6 +274,13 @@ function FolderItem({
 
   return (
     <div>
+      <ConfirmModal
+        open={isConfirmOpen}
+        setOpen={setIsConfirmOpen}
+        title="Delete Workspace"
+        description="Are you sure you want to delete this workspace?"
+        onConfirm={handleDeleteWorkspace}
+      />
       <ContextMenu onOpenChange={setIsContextMenuOpen}>
         <ContextMenuTrigger asChild>
           <button
@@ -267,21 +298,8 @@ function FolderItem({
               openAccess={() => {
                 if (workspace) openAccess?.(workspace.id);
               }}
-              deleteWorkspace={() => {
-                console.log("delete workspace", workspace);
-              }}
+              deleteWorkspace={() => setIsConfirmOpen(true)}
             />
-
-            {/* <div
-              tabIndex={0}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (workspace) openAccess?.(workspace.id);
-              }}
-              className={`absolute right-0 top-0 h-6 w-6 flex group-hover/workspace:visible invisible items-center justify-center`}
-            >
-              <Users className="w-3 h-3" />
-            </div> */}
           </button>
         </ContextMenuTrigger>
 

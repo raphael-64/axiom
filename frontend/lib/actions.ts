@@ -14,6 +14,13 @@ export async function askGeorge(body: string) {
   return response.text();
 }
 
+export async function getFiles() {
+  const files = await fetch(
+    "https://student.cs.uwaterloo.ca/~se212/files.json"
+  );
+  return await files.json();
+}
+
 /* 
 WORKSPACE ACTIONS
 */
@@ -72,7 +79,7 @@ export async function deleteWorkspace(workspaceId: string) {
 
   return {
     success: response.ok,
-    message: response.ok ? "Workspace deleted successfully" : data.message,
+    message: data.message,
   };
 }
 
@@ -132,7 +139,7 @@ export async function deleteInvite(inviteId: string) {
 
   return {
     success: response.ok,
-    message: response.ok ? "Invitation deleted successfully" : data.message,
+    message: data.message,
   };
 }
 export async function removeCollaborator(userId: string, workspaceId: string) {

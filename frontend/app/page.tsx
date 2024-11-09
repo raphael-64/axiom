@@ -1,12 +1,6 @@
+import { getFiles } from "@/lib/actions";
 import { FilesResponse } from "@/lib/types";
 import dynamic from "next/dynamic";
-
-const getFiles = async () => {
-  const files = await fetch(
-    "https://student.cs.uwaterloo.ca/~se212/files.json"
-  );
-  return await files.json();
-};
 
 const EditorDynamic = dynamic(() => import("@/components/editor"), {
   ssr: false,

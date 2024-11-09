@@ -113,8 +113,8 @@ app.put("/api/workspaces", (req, res) => __awaiter(void 0, void 0, void 0, funct
 app.delete("/api/workspaces", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { workspaceId } = req.body;
-        yield (0, utils_1.deleteWorkspaceById)(workspaceId);
-        res.json({ message: "Workspace deleted successfully" });
+        const deleted = yield (0, utils_1.deleteWorkspaceById)(workspaceId);
+        res.json({ message: `Workspace ${deleted.project} deleted successfully` });
     }
     catch (error) {
         res.status(500).json({ message: "Failed to delete workspace" });
@@ -160,7 +160,9 @@ app.delete("/api/workspaces/collaborator", (req, res) => __awaiter(void 0, void 
     try {
         const { userId, workspaceId } = req.body;
         yield (0, utils_1.removeUserFromWorkspace)(workspaceId, userId);
-        res.json({ message: "Collaborator removed successfully" });
+        res.json({
+            message: `Collaborator ${userId} removed successfully`,
+        });
     }
     catch (error) {
         res.status(500).json({ message: "Failed to remove collaborator" });

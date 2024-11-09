@@ -3,6 +3,7 @@
 // React and hooks
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useWindowSize } from "@uidotdev/usehooks";
+import { useQuery } from "@tanstack/react-query";
 
 // Monaco editor
 import monaco from "monaco-editor";
@@ -29,14 +30,16 @@ import ManageAccessModal from "./access";
 // Types and utilities
 import { FilesResponse, Tab } from "@/lib/types";
 import { registerGeorge } from "@/lib/lang";
-import { askGeorge } from "@/lib/actions";
+import { askGeorge, getFiles } from "@/lib/actions";
 import { ImperativePanelHandle } from "react-resizable-panels";
 import { toast } from "sonner";
 
 // Collaboration
 import * as Y from "yjs";
 import { Socket, io } from "socket.io-client";
-import { Button } from "../ui/button";
+
+// Update the import to include useFiles
+import { useFiles } from "@/lib/query";
 
 const sizes = {
   min: 140,
@@ -45,6 +48,8 @@ const sizes = {
 
 export default function EditorLayout({ files }: { files: FilesResponse }) {
   const { width } = useWindowSize();
+
+  const { data: filesData } = useFiles(files);
 
   const explorerRef = useRef<ImperativePanelHandle>(null);
   const outputRef = useRef<ImperativePanelHandle>(null);
@@ -456,7 +461,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
           >
             <Explorer
               userId={tempUserId}
-              files={files}
+              files={filesData}
               onFileClick={handleFileClick}
               openUpload={() => setIsUploadOpen(true)}
               openAccess={(workspaceId) => setManageAccessId(workspaceId)}

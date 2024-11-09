@@ -136,8 +136,8 @@ app.put("/api/workspaces", async (req: Request, res: Response) => {
 app.delete("/api/workspaces", async (req: Request, res: Response) => {
   try {
     const { workspaceId } = req.body;
-    await deleteWorkspaceById(workspaceId);
-    res.json({ message: "Workspace deleted successfully" });
+    const deleted = await deleteWorkspaceById(workspaceId);
+    res.json({ message: `Workspace ${deleted.project} deleted successfully` });
   } catch (error) {
     res.status(500).json({ message: "Failed to delete workspace" });
   }
@@ -188,7 +188,9 @@ app.delete(
     try {
       const { userId, workspaceId } = req.body;
       await removeUserFromWorkspace(workspaceId, userId);
-      res.json({ message: "Collaborator removed successfully" });
+      res.json({
+        message: `Collaborator ${userId} removed successfully`,
+      });
     } catch (error) {
       res.status(500).json({ message: "Failed to remove collaborator" });
     }

@@ -4,9 +4,12 @@ import {
   removeCollaborator,
   deleteInvite,
   respondToInvite,
+  getFiles,
+  deleteWorkspace,
 } from "@/lib/actions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Collaborator, Invite } from "./types";
+import { Collaborator, Invite, FilesResponse, Workspace } from "./types";
+import { toast } from "sonner";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
@@ -144,5 +147,54 @@ export function useUserInvites(userId: string) {
     queryKey: ["invites", userId],
     queryFn: () => getInvitesForUser(userId),
     enabled: !!userId,
+  });
+}
+
+export function useFiles(initialData?: FilesResponse) {
+  return useQuery({
+    queryKey: ["files"],
+    queryFn: getFiles,
+    initialData,
+  });
+}
+
+export function useDeleteWorkspace() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteWorkspace,
+    onMutate: async (workspaceId) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["workspaces"] });
+
+      // Snapshot the previous value
+      const previousWorkspaces = queryClient.getQueryData<{
+        workspaces: Workspace[];
+      }>(["workspaces"]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData<{ workspaces: Workspace[] }>(
+        ["workspaces"],
+        (old) => {
+          if (!old) return { workspaces: [] };
+          return {
+            workspaces: old.workspaces.filter((w) => w.id !== workspaceId),
+          };
+        }
+      );
+
+      return { previousWorkspaces };
+    },
+    onError: (err, workspaceId, context) => {
+      // Rollback on error
+      if (context?.previousWorkspaces) {
+        queryClient.setQueryData(["workspaces"], context.previousWorkspaces);
+      }
+      toast.error("Failed to delete workspace");
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure sync
+      queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+    },
   });
 }
