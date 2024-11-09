@@ -20,6 +20,13 @@ interface Workspace {
 // Map of all workspaces
 const workspaces = new Map<string, Workspace>();
 
+// Replace the single awarenessStates map with a file-specific one
+// Map<workspaceId, Map<filePath, Map<clientId, state>>>
+const fileAwareness = new Map<string, Map<string, Map<string, any>>>();
+
+// Add this to track which file each client is currently viewing
+const clientFiles = new Map<string, { workspaceId: string; path: string }>();
+
 export const handleConnection = (io: Server) => {
   io.on("connection", async (socket: Socket) => {
     const userId = socket.handshake.auth.userId;
@@ -78,6 +85,24 @@ export const handleConnection = (io: Server) => {
       const docData = workspace.docs.get(path)!;
       const update = Y.encodeStateAsUpdate(docData.yDoc);
       socket.emit("sync", Buffer.from(update).toString("base64"));
+
+      // Update client's current file
+      clientFiles.set(socket.id, { workspaceId, path });
+
+      // Initialize file awareness if needed
+      if (!fileAwareness.has(workspaceId)) {
+        fileAwareness.set(workspaceId, new Map());
+      }
+      const workspaceAwareness = fileAwareness.get(workspaceId)!;
+      if (!workspaceAwareness.has(path)) {
+        workspaceAwareness.set(path, new Map());
+      }
+
+      // Send current awareness states for this file
+      const fileStates = workspaceAwareness.get(path)!;
+      socket.emit("awareness-update", {
+        states: Array.from(fileStates.entries()),
+      });
     });
 
     socket.on("leaveRoom", ({ workspaceId }) => {
@@ -119,6 +144,39 @@ export const handleConnection = (io: Server) => {
       socket.emit("fileContent", {
         path,
         content,
+      });
+    });
+
+    socket.on("awareness", ({ workspaceId, state }) => {
+      const clientFile = clientFiles.get(socket.id);
+      if (!clientFile || clientFile.workspaceId !== workspaceId) return;
+
+      const workspaceAwareness = fileAwareness.get(workspaceId);
+      if (!workspaceAwareness) return;
+
+      const fileStates = workspaceAwareness.get(clientFile.path);
+      if (!fileStates) return;
+
+      // Update state for this client
+      fileStates.set(socket.id, state);
+
+      // Log awareness data for debugging
+      console.log("\n=== Awareness Update ===");
+      console.log("File:", clientFile.path);
+      console.log("Connected clients:");
+      fileStates.forEach((state, clientId) => {
+        console.log(`\nClient ${clientId}:`);
+        console.log("User:", state.user?.name);
+        console.log("Color:", state.user?.color);
+        console.log("Cursor:", state.user?.cursor?.position);
+        console.log("Selection:", state.user?.cursor?.selection);
+      });
+      console.log("========================\n");
+
+      // Only broadcast to others viewing the same file
+      socket.to(workspaceId).emit("awareness-update", {
+        path: clientFile.path,
+        states: Array.from(fileStates.entries()),
       });
     });
 
@@ -174,5 +232,32 @@ async function handleLeaveRoom(
     });
 
     workspaces.delete(workspaceId); // Delete workspace in memory
+  }
+
+  // Clean up awareness data
+  const clientFile = clientFiles.get(socket.id);
+  if (clientFile) {
+    const workspaceAwareness = fileAwareness.get(workspaceId);
+    if (workspaceAwareness) {
+      const fileStates = workspaceAwareness.get(clientFile.path);
+      if (fileStates) {
+        fileStates.delete(socket.id);
+
+        // Clean up empty maps
+        if (fileStates.size === 0) {
+          workspaceAwareness.delete(clientFile.path);
+        }
+        if (workspaceAwareness.size === 0) {
+          fileAwareness.delete(workspaceId);
+        }
+
+        // Notify others viewing this file
+        socket.to(workspaceId).emit("awareness-update", {
+          path: clientFile.path,
+          states: Array.from(fileStates.entries()),
+        });
+      }
+    }
+    clientFiles.delete(socket.id);
   }
 }

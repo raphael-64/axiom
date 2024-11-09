@@ -41,6 +41,11 @@ const prisma_1 = __importDefault(require("./prisma"));
 const utils_1 = require("@utils/utils");
 // Map of all workspaces
 const workspaces = new Map();
+// Replace the single awarenessStates map with a file-specific one
+// Map<workspaceId, Map<filePath, Map<clientId, state>>>
+const fileAwareness = new Map();
+// Add this to track which file each client is currently viewing
+const clientFiles = new Map();
 const handleConnection = (io) => {
     io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
         const userId = socket.handshake.auth.userId;
@@ -89,6 +94,21 @@ const handleConnection = (io) => {
             const docData = workspace.docs.get(path);
             const update = Y.encodeStateAsUpdate(docData.yDoc);
             socket.emit("sync", Buffer.from(update).toString("base64"));
+            // Update client's current file
+            clientFiles.set(socket.id, { workspaceId, path });
+            // Initialize file awareness if needed
+            if (!fileAwareness.has(workspaceId)) {
+                fileAwareness.set(workspaceId, new Map());
+            }
+            const workspaceAwareness = fileAwareness.get(workspaceId);
+            if (!workspaceAwareness.has(path)) {
+                workspaceAwareness.set(path, new Map());
+            }
+            // Send current awareness states for this file
+            const fileStates = workspaceAwareness.get(path);
+            socket.emit("awareness-update", {
+                states: Array.from(fileStates.entries()),
+            });
         }));
         socket.on("leaveRoom", ({ workspaceId }) => {
             console.log("leaveRoom", workspaceId);
@@ -124,6 +144,37 @@ const handleConnection = (io) => {
             socket.emit("fileContent", {
                 path,
                 content,
+            });
+        });
+        socket.on("awareness", ({ workspaceId, state }) => {
+            const clientFile = clientFiles.get(socket.id);
+            if (!clientFile || clientFile.workspaceId !== workspaceId)
+                return;
+            const workspaceAwareness = fileAwareness.get(workspaceId);
+            if (!workspaceAwareness)
+                return;
+            const fileStates = workspaceAwareness.get(clientFile.path);
+            if (!fileStates)
+                return;
+            // Update state for this client
+            fileStates.set(socket.id, state);
+            // Log awareness data for debugging
+            console.log("\n=== Awareness Update ===");
+            console.log("File:", clientFile.path);
+            console.log("Connected clients:");
+            fileStates.forEach((state, clientId) => {
+                var _a, _b, _c, _d, _e, _f;
+                console.log(`\nClient ${clientId}:`);
+                console.log("User:", (_a = state.user) === null || _a === void 0 ? void 0 : _a.name);
+                console.log("Color:", (_b = state.user) === null || _b === void 0 ? void 0 : _b.color);
+                console.log("Cursor:", (_d = (_c = state.user) === null || _c === void 0 ? void 0 : _c.cursor) === null || _d === void 0 ? void 0 : _d.position);
+                console.log("Selection:", (_f = (_e = state.user) === null || _e === void 0 ? void 0 : _e.cursor) === null || _f === void 0 ? void 0 : _f.selection);
+            });
+            console.log("========================\n");
+            // Only broadcast to others viewing the same file
+            socket.to(workspaceId).emit("awareness-update", {
+                path: clientFile.path,
+                states: Array.from(fileStates.entries()),
             });
         });
         socket.on("disconnect", () => __awaiter(void 0, void 0, void 0, function* () {
@@ -168,6 +219,30 @@ function handleLeaveRoom(socket, workspaceId, userId) {
                 workspace.docs.delete(path);
             });
             workspaces.delete(workspaceId); // Delete workspace in memory
+        }
+        // Clean up awareness data
+        const clientFile = clientFiles.get(socket.id);
+        if (clientFile) {
+            const workspaceAwareness = fileAwareness.get(workspaceId);
+            if (workspaceAwareness) {
+                const fileStates = workspaceAwareness.get(clientFile.path);
+                if (fileStates) {
+                    fileStates.delete(socket.id);
+                    // Clean up empty maps
+                    if (fileStates.size === 0) {
+                        workspaceAwareness.delete(clientFile.path);
+                    }
+                    if (workspaceAwareness.size === 0) {
+                        fileAwareness.delete(workspaceId);
+                    }
+                    // Notify others viewing this file
+                    socket.to(workspaceId).emit("awareness-update", {
+                        path: clientFile.path,
+                        states: Array.from(fileStates.entries()),
+                    });
+                }
+            }
+            clientFiles.delete(socket.id);
         }
     });
 }

@@ -36,6 +36,7 @@ import { toast } from "sonner";
 
 // Collaboration
 import * as Y from "yjs";
+import * as awarenessProtocol from "y-protocols/awareness.js";
 import { Socket, io } from "socket.io-client";
 
 // Update the import to include useFiles
@@ -228,11 +229,39 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
         ytext.insert(0, fileContent);
       }
 
+      const awareness = new awarenessProtocol.Awareness(doc);
+
+      const getRandomColor = () => {
+        const colors = [
+          "#3B82F6", // blue-500
+          "#EC4899", // pink-500
+          "#EF4444", // red-500
+          "#F97316", // orange-500
+          "#EAB308", // yellow-500
+          "#22C55E", // green-500
+          "#06B6D4", // cyan-500
+          "#6366F1", // indigo-500
+          "#A855F7", // purple-500
+          "#D946EF", // fuchsia-500
+        ];
+        return colors[Math.floor(Math.random() * colors.length)];
+      };
+
+      // Update with user info
+      awareness.setLocalState({
+        user: {
+          name: tempUserId,
+          color: getRandomColor(), // Helper to generate unique colors
+          cursor: null,
+        },
+      });
+
+      // Update binding with awareness
       const binding = new MonacoBinding(
         ytext,
         model,
         new Set([editorRef]),
-        null
+        awareness
       );
       setMonacoBinding(binding);
 
@@ -248,7 +277,73 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
           update: Buffer.from(update).toString("base64"),
         });
       });
+
+      awareness.on(
+        "change",
+        ({
+          added,
+          updated,
+          removed,
+        }: {
+          added: any;
+          updated: any;
+          removed: any;
+        }) => {
+          const states = Array.from(awareness.getStates().values());
+          console.log(states);
+          // Update UI to show other users' cursors/selections
+        }
+      );
+
+      // Add inside handleEditorContent after awareness initialization
+      awareness.on(
+        "change",
+        ({
+          added,
+          updated,
+          removed,
+        }: {
+          added: any;
+          updated: any;
+          removed: any;
+        }) => {
+          const states = Array.from(awareness.getStates().values());
+          console.log(states);
+
+          // Send our state to server
+          socket?.emit("awareness", {
+            workspaceId,
+            state: awareness.getLocalState(),
+          });
+        }
+      );
+
+      // Add socket listener after other socket events
+      socket?.on("awareness-update", ({ path: updatePath, states }) => {
+        // Only update awareness if we're viewing this file
+        if (updatePath === path) {
+          states.forEach(([clientId, state]: [string, any]) => {
+            if (state && state.user) {
+              awareness.setLocalStateField("user", state.user);
+            }
+          });
+        }
+      });
+
+      // Add cursor position tracking
+      editorRef.onDidChangeCursorPosition((e) => {
+        if (awareness.getLocalState()) {
+          awareness.setLocalStateField("user", {
+            ...awareness.getLocalState()?.user,
+            cursor: {
+              position: e.position,
+              selection: editorRef.getSelection(),
+            },
+          });
+        }
+      });
     } else {
+      // Local file
       const content = localStorage.getItem(path) || "";
       const model = monacoInstance.editor.createModel(content, "george");
       editorRef.setModel(model);
