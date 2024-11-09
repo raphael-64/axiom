@@ -6,6 +6,7 @@ import {
   MoreHorizontal,
   Plus,
   RotateCw,
+  Trash,
   Upload,
   Users,
 } from "lucide-react";
@@ -215,6 +216,8 @@ function FolderItem({
   openAccess?: (workspaceId: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
   const name = folder ? folder.name : workspace ? workspace.project : "";
   const files = folder
     ? folder.files.map((file) => ({ ...file, id: file.path }))
@@ -222,27 +225,75 @@ function FolderItem({
     ? workspace.files
     : [];
 
+  if (!workspace)
+    return (
+      <div>
+        <button
+          onClick={() => setIsOpen((prev) => !prev)}
+          className={`flex items-center gap-1 hover:bg-muted w-full px-2 h-6 relative ${
+            workspace ? "group/workspace" : ""
+          }`}
+        >
+          <span className="w-4 text-xs">{isOpen ? "▼" : "▶"}</span>
+          {name}
+        </button>
+
+        {isOpen && (
+          <>
+            {files.map((file) => (
+              <File key={file.id} file={file} onFileClick={onFileClick} />
+            ))}
+          </>
+        )}
+      </div>
+    );
+
   return (
     <div>
-      <button
-        onClick={() => setIsOpen((prev) => !prev)}
-        className={`flex items-center gap-1 hover:bg-muted w-full px-2 h-6 relative ${
-          workspace ? "group/workspace" : ""
-        }`}
-      >
-        <span className="w-4 text-xs">{isOpen ? "▼" : "▶"}</span>
-        {name}
-        <div
-          tabIndex={0}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (workspace) openAccess?.(workspace.id);
-          }}
-          className={`absolute right-0 top-0 h-6 w-6 flex group-hover/workspace:visible invisible items-center justify-center`}
-        >
-          <Users className="w-3 h-3" />
-        </div>
-      </button>
+      <ContextMenu onOpenChange={setIsContextMenuOpen}>
+        <ContextMenuTrigger asChild>
+          <button
+            onClick={() => setIsOpen((prev) => !prev)}
+            className={`flex items-center gap-1 hover:bg-muted w-full px-2 h-6 relative ${
+              workspace ? "group/workspace" : ""
+            } ${isDropdownOpen || isContextMenuOpen ? "bg-muted" : ""}`}
+          >
+            <span className="w-4 text-xs">{isOpen ? "▼" : "▶"}</span>
+            {name}
+
+            <WorkspaceFolderMenu
+              isOpen={isDropdownOpen}
+              setIsOpen={setIsDropdownOpen}
+              openAccess={() => {
+                if (workspace) openAccess?.(workspace.id);
+              }}
+              deleteWorkspace={() => {
+                console.log("delete workspace", workspace);
+              }}
+            />
+
+            {/* <div
+              tabIndex={0}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (workspace) openAccess?.(workspace.id);
+              }}
+              className={`absolute right-0 top-0 h-6 w-6 flex group-hover/workspace:visible invisible items-center justify-center`}
+            >
+              <Users className="w-3 h-3" />
+            </div> */}
+          </button>
+        </ContextMenuTrigger>
+
+        <ContextMenuContent>
+          <ContextMenuItem>
+            <Users className="!w-3 !h-3" /> Share
+          </ContextMenuItem>
+          <ContextMenuItem>
+            <Trash className="!w-3 !h-3" /> Delete
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
 
       {isOpen && (
         <>
@@ -302,6 +353,52 @@ function File({
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
+  );
+}
+
+function WorkspaceFolderMenu({
+  isOpen,
+  setIsOpen,
+  openAccess,
+  deleteWorkspace,
+}: {
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
+  openAccess: () => void;
+  deleteWorkspace: () => void;
+}) {
+  return (
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <DropdownMenuTrigger asChild>
+        <div
+          tabIndex={0}
+          onClick={(e) => e.stopPropagation()}
+          className={`absolute right-0 top-0 h-6 w-6 flex group-hover/workspace:visible items-center justify-center ${
+            isOpen ? "visible" : "invisible"
+          }`}
+        >
+          <MoreHorizontal className="w-3 h-3" />
+        </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            openAccess();
+          }}
+        >
+          <Users className="!w-3 !h-3" /> Share
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            deleteWorkspace();
+          }}
+        >
+          <Trash className="!w-3 !h-3" /> Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
