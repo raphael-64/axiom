@@ -343,34 +343,44 @@ function File({
 }) {
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
   return (
-    <ContextMenu onOpenChange={setIsContextMenuOpen}>
-      <ContextMenuTrigger asChild>
-        <button
-          onClick={() => onFileClick(file.path, file.name, workspaceId)}
-          className={`hover:bg-muted w-full text-left pr-2 pl-7 py-0.5 relative group/file ${
-            isContextMenuOpen || isDropdownOpen ? "bg-muted" : ""
-          }`}
-        >
-          {file.name}
-          <FileMenu
-            path={file.path}
-            isOpen={isDropdownOpen}
-            setIsOpen={setIsDropdownOpen}
-          />
-        </button>
-      </ContextMenuTrigger>
+    <>
+      <ConfirmModal
+        open={isResetConfirmOpen}
+        setOpen={setIsResetConfirmOpen}
+        title="Reset File"
+        description="Are you sure you want to reset this file? All changes will be lost."
+        onConfirm={() => console.log("reset", file.path)}
+      />
+      <ContextMenu onOpenChange={setIsContextMenuOpen}>
+        <ContextMenuTrigger asChild>
+          <button
+            onClick={() => onFileClick(file.path, file.name, workspaceId)}
+            className={`hover:bg-muted w-full text-left pr-2 pl-7 py-0.5 relative group/file ${
+              isContextMenuOpen || isDropdownOpen ? "bg-muted" : ""
+            }`}
+          >
+            {file.name}
+            <FileMenu
+              path={file.path}
+              isOpen={isDropdownOpen}
+              setIsOpen={setIsDropdownOpen}
+            />
+          </button>
+        </ContextMenuTrigger>
 
-      <ContextMenuContent>
-        <ContextMenuItem>
-          <Download className="!w-3 !h-3" /> Download
-        </ContextMenuItem>
-        <ContextMenuItem>
-          <RotateCw className="!w-3 !h-3" /> Reset
-        </ContextMenuItem>
-      </ContextMenuContent>
-    </ContextMenu>
+        <ContextMenuContent>
+          <ContextMenuItem>
+            <Download className="!w-3 !h-3" /> Download
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => setIsResetConfirmOpen(true)}>
+            <RotateCw className="!w-3 !h-3" /> Reset
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
+    </>
   );
 }
 
@@ -429,26 +439,37 @@ function FileMenu({
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
 }) {
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger asChild>
-        <div
-          tabIndex={0}
-          className={`absolute right-0 top-0 h-6 w-6 flex group-hover/file:visible items-center justify-center ${
-            isOpen ? "visible" : "invisible"
-          }`}
-        >
-          <MoreHorizontal className="w-3 h-3" />
-        </div>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        <DropdownMenuItem>
-          <Download className="!w-3 !h-3" /> Download
-        </DropdownMenuItem>
-        <DropdownMenuItem>
-          <RotateCw className="!w-3 !h-3" /> Reset
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <ConfirmModal
+        open={isResetConfirmOpen}
+        setOpen={setIsResetConfirmOpen}
+        title="Reset File"
+        description="Are you sure you want to reset this file? All changes will be lost."
+        onConfirm={() => console.log("reset", path)}
+      />
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+        <DropdownMenuTrigger asChild>
+          <div
+            tabIndex={0}
+            className={`absolute right-0 top-0 h-6 w-6 flex group-hover/file:visible items-center justify-center ${
+              isOpen ? "visible" : "invisible"
+            }`}
+          >
+            <MoreHorizontal className="w-3 h-3" />
+          </div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          <DropdownMenuItem>
+            <Download className="!w-3 !h-3" /> Download
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setIsResetConfirmOpen(true)}>
+            <RotateCw className="!w-3 !h-3" /> Reset
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </>
   );
 }
