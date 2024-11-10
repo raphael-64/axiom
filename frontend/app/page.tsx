@@ -1,10 +1,11 @@
+import LocalBlock from "@/components/local-block";
 import { getFiles } from "@/lib/actions";
 import { FilesResponse } from "@/lib/types";
 import dynamic from "next/dynamic";
 
-const EditorDynamic = dynamic(() => import("@/components/editor"), {
-  ssr: false,
-});
+// const EditorDynamic = dynamic(() => import("@/components/editor"), {
+//   ssr: false,
+// });
 
 export default async function Home() {
   const files: FilesResponse = await getFiles();
@@ -14,7 +15,7 @@ export default async function Home() {
 
   return (
     <>
-      <EditorDynamic files={files} />
+      <LocalBlock files={files} />
     </>
   );
 }

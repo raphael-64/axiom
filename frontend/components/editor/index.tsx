@@ -47,7 +47,13 @@ const sizes = {
   default: 180,
 };
 
-export default function EditorLayout({ files }: { files: FilesResponse }) {
+export default function EditorLayout({
+  files,
+  userId,
+}: {
+  files: FilesResponse;
+  userId: string;
+}) {
   const { width } = useWindowSize();
 
   const { data: filesData } = useFiles(files);
@@ -88,11 +94,11 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>();
 
   // Temporary user ID for testing
-  const randomId = Math.floor(Math.random() * 900000 + 100000);
-  const [tempUserId, setTempUserId] = useState<string>(
-    // `test_watiam_${randomId}`
-    "i2dey"
-  );
+  // const randomId = Math.floor(Math.random() * 900000 + 100000);
+  // const [tempUserId, setTempUserId] = useState<string>(
+  // `test_watiam_${randomId}`
+  // "i2dey"
+  // );
 
   const toggleExplorer = () => {
     const panel = explorerRef.current;
@@ -164,7 +170,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
   useEffect(() => {
     const socket = io("http://localhost:4000", {
       auth: {
-        userId: tempUserId,
+        userId,
       },
     });
 
@@ -181,7 +187,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     return () => {
       socket.disconnect();
     };
-  }, [tempUserId]);
+  }, [userId]);
 
   const handleEditorContent = async (path: string, workspaceId?: string) => {
     if (!editorRef || !monacoInstance) return;
@@ -250,7 +256,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
       // Update with user info
       awareness.setLocalState({
         user: {
-          name: tempUserId,
+          name: userId,
           color: getRandomColor(), // Helper to generate unique colors
           cursor: null,
         },
@@ -483,12 +489,12 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
         open={!!manageAccessId}
         setOpen={(open) => setManageAccessId(open ? manageAccessId : null)}
         workspaceId={manageAccessId}
-        userId={tempUserId}
+        userId={userId}
       />
       <SettingsModal
         open={isSettingsOpen}
         setOpen={setIsSettingsOpen}
-        userId={tempUserId}
+        userId={userId}
       />
       <UploadModal open={isUploadOpen} setOpen={setIsUploadOpen} />
       <div className="w-full h-full flex flex-col">
@@ -514,12 +520,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
             ) : (
               <div className="rounded-full size-2 shrink-0 bg-red-500" />
             )}
-            <Input
-              value={tempUserId}
-              placeholder="Temporary User ID"
-              onChange={(e) => setTempUserId(e.target.value)}
-              className="mx-2"
-            />
+            <Input value={userId} className="mx-2" readOnly />
             <TooltipButton
               variant="ghost"
               size="smIcon"
@@ -555,7 +556,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
             minSize={percentSizes.min}
           >
             <Explorer
-              userId={tempUserId}
+              userId={userId}
               files={filesData}
               onFileClick={handleFileClick}
               openUpload={() => setIsUploadOpen(true)}
