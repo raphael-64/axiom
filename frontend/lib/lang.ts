@@ -49,6 +49,13 @@ export const registerGeorge: OnMount = (editor, monaco) => {
         // Line numbers - must be before regular numbers
         [/^\s*\d+\)/, "variable.language"],
 
+        // Numbers in references (after 'on') should be white - no token assigned
+        [/\bon\s+\d+(?:\s*,\s*\d+)*/, { token: "" }],
+
+        // All numbers in expressions should be white (including those in brackets)
+        // except when they're part of an identifier or line number
+        [/(?<![a-zA-Z])\d+(?![a-zA-Z])/, { token: "" }],
+
         // Keywords
         [
           /\b(by|on|forall|exists|schema|pred|end|proc|fun|assert|if|then|else|while|do)\b/,
