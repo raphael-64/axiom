@@ -1,5 +1,5 @@
 import { FilesResponse, Workspace } from "@/lib/types";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { TooltipButton } from "@/components/tooltip-button";
 import {
   Download,
@@ -78,6 +78,12 @@ const MISC_FOLDER: FilesResponse[0] = {
     },
   ],
 };
+
+function getStoredFolderState(folderId: string): boolean {
+  if (typeof window === 'undefined') return false;
+  const stored = localStorage.getItem(`folder-${folderId}`);
+  return stored === 'true';
+}
 
 export default function Explorer({
   files,
@@ -242,7 +248,8 @@ function FolderItem({
   onFileClick: (path: string, name: string, workspaceId?: string, initialContent?: string) => void;
   openAccess?: (workspaceId: string) => void;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const folderId = workspace?.id || folder?.name || "";
+  const [isOpen, setIsOpen] = useState(() => getStoredFolderState(folderId));
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -253,6 +260,12 @@ function FolderItem({
     ? workspace.files
     : [];
   const deleteWorkspaceMutation = useDeleteWorkspace();
+
+  useEffect(() => {
+    if (folderId) {
+      localStorage.setItem(`folder-${folderId}`, isOpen.toString());
+    }
+  }, [isOpen, folderId]);
 
   const handleDeleteWorkspace = () => {
     if (!workspace) return;
