@@ -42,10 +42,14 @@ export default function SettingsModal({
   open,
   setOpen,
   userId,
+  autoComplete,
+  setAutoComplete,
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
   userId: string;
+  autoComplete: boolean;
+  setAutoComplete: (autoComplete: boolean) => void;
 }) {
   const [activeCategory, setActiveCategory] = useState<Category>("editor");
 
@@ -122,6 +126,25 @@ export default function SettingsModal({
                       </TooltipProvider>
                     </div>
                     <Switch />
+                  </div>
+                  <div className="flex items-center justify-between h-8">
+                    <div className="flex items-center gap-2">
+                      <label>Auto Complete</label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <HelpCircle className="size-3 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            Toggle code completion suggestions
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <Switch
+                      checked={autoComplete}
+                      onCheckedChange={setAutoComplete}
+                    />
                   </div>
                 </div>
               ) : activeCategory === "shortcuts" ? (

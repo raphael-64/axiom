@@ -103,6 +103,8 @@ export default function EditorLayout({
   const [decorationsCollection, setDecorationsCollection] =
     useState<monaco.editor.IEditorDecorationsCollection>();
 
+  const [autoComplete, setAutoComplete] = useState(true);
+
   const toggleExplorer = () => {
     const panel = explorerRef.current;
     if (panel) {
@@ -521,6 +523,16 @@ export default function EditorLayout({
     }
   }, [activeId]);
 
+  useEffect(() => {
+    if (editorRef) {
+      editorRef.updateOptions({
+        quickSuggestions: autoComplete,
+        suggestOnTriggerCharacters: autoComplete,
+        parameterHints: { enabled: autoComplete },
+      });
+    }
+  }, [autoComplete]);
+
   if (!width) return null;
 
   const percentSizes = {
@@ -568,6 +580,12 @@ export default function EditorLayout({
 
     const decorationsCollection = editor.createDecorationsCollection();
     setDecorationsCollection(decorationsCollection);
+
+    editor.updateOptions({
+      quickSuggestions: autoComplete,
+      suggestOnTriggerCharacters: autoComplete,
+      parameterHints: { enabled: autoComplete },
+    });
   };
 
   return (
@@ -582,6 +600,8 @@ export default function EditorLayout({
         open={isSettingsOpen}
         setOpen={setIsSettingsOpen}
         userId={userId}
+        autoComplete={autoComplete}
+        setAutoComplete={setAutoComplete}
       />
       <UploadModal open={isUploadOpen} setOpen={setIsUploadOpen} />
       <div className="w-full h-full flex flex-col">
