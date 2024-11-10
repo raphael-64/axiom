@@ -69,6 +69,16 @@ const testWorkspaces: FilesResponse = [
   },
 ];
 
+const MISC_FOLDER: FilesResponse[0] = {
+  name: "Miscellaneous",
+  files: [
+    {
+      name: "scratchpad.grg",
+      path: "Miscellaneous/scratchpad.grg",
+    },
+  ],
+};
+
 export default function Explorer({
   files,
   onFileClick,
@@ -77,7 +87,7 @@ export default function Explorer({
   userId,
 }: {
   files: FilesResponse;
-  onFileClick: (path: string, name: string, workspaceId?: string) => void;
+  onFileClick: (path: string, name: string, workspaceId?: string, initialContent?: string) => void;
   openUpload: () => void;
   openAccess: (workspaceId: string) => void;
   userId: string;
@@ -114,6 +124,18 @@ export default function Explorer({
               <Upload className="!size-3" />
             </TooltipButton>
           </div>
+          <FolderItem
+            key={MISC_FOLDER.name}
+            folder={MISC_FOLDER}
+            onFileClick={(path, name) => {
+              if (path === "Miscellaneous/scratchpad.grg") {
+                const content = localStorage.getItem(path) || "";
+                onFileClick(path, name, undefined, content);
+              } else {
+                onFileClick(path, name);
+              }
+            }}
+          />
           {files.map((folder) => (
             <FolderItem
               key={folder.name}
@@ -217,7 +239,7 @@ function FolderItem({
 }: {
   folder?: FilesResponse[0];
   workspace?: Workspace;
-  onFileClick: (path: string, name: string, workspaceId?: string) => void;
+  onFileClick: (path: string, name: string, workspaceId?: string, initialContent?: string) => void;
   openAccess?: (workspaceId: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -338,7 +360,7 @@ function File({
     name: string;
     path: string;
   };
-  onFileClick: (path: string, name: string, workspaceId?: string) => void;
+  onFileClick: (path: string, name: string, workspaceId?: string, initialContent?: string) => void;
   workspaceId?: string;
 }) {
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
