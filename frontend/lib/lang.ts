@@ -40,17 +40,14 @@ export const registerGeorge: OnMount = (editor, monaco) => {
         // Comments - must be before other rules
         [/\/\/.*$/, "comment"],
 
-        // Source constants (#q, #u, #a)
-        [/#[qua]/, "constant.other"],
-
-        // Check statements
-        [/#check\s+(PROP|ND|PC|Z|TP|ST|PRED|NONE)\b/, "constant.other"],
+        // Entire lines starting with # should be colored
+        [/^.*#(?:check\s+(?:PROP|ND|PC|Z|TP|ST|PRED|NONE)|[qua][ \t].*$)/, "constant.other"],
 
         // Line numbers - must be before regular numbers
-        [/^\s*\d+\)/, "variable.language"],
+        [/^\s*(?:\d+|bc|ih)\)/, "variable.language"],
 
         // Numbers in references (after 'on') should be colored like line numbers
-        [/\bon\s+(\d+(?:\s*[,-]\s*\d+)*)/g, "variable.language"],
+        [/\bon\s+((?:\d+|bc|ih)(?:\s*[,-]\s*(?:\d+|bc|ih))*)/g, "variable.language"],
 
         // All other numbers in expressions should be white (including those in brackets)
         // except when they're part of an identifier or line number
@@ -528,9 +525,9 @@ export const registerGeorge: OnMount = (editor, monaco) => {
 
       const lineContent = model.getLineContent(position.lineNumber);
 
-      // Check if the word is a number or part of a range
-      const numberPattern = /^\d+$/;
-      const rangePattern = /^(\d+)-(\d+)$/;
+      // Check if the word is a number, bc, ih or part of a range
+      const numberPattern = /^(?:\d+|bc|ih)$/;
+      const rangePattern = /^(\d+|bc|ih)-(\d+|bc|ih)$/;
 
       // Get all references after "on"
       const onMatch = lineContent.match(/\bon\s+(.*?)(?=\s*(?:by|$))/);
@@ -548,27 +545,24 @@ export const registerGeorge: OnMount = (editor, monaco) => {
         const end = currentPos + ref.length;
 
         if (cursorPosition >= start && cursorPosition <= end) {
-          // Check if it's a range (e.g., "106-120")
+          // Check if it's a range (e.g., "106-120" or "bc-ih")
           const rangeMatch = ref.match(rangePattern);
           if (rangeMatch) {
-            const [startNum, endNum] = [
-              parseInt(rangeMatch[1]),
-              parseInt(rangeMatch[2]),
-            ];
-            // If cursor is on the first number
-            if (cursorPosition <= start + rangeMatch[1].length) {
-              return findLineDefinition(model, startNum, position.lineNumber);
+            const [startRef, endRef] = [rangeMatch[1], rangeMatch[2]];
+            // If cursor is on the first reference
+            if (cursorPosition <= start + startRef.length) {
+              return findLineDefinition(model, startRef, position.lineNumber);
             }
-            // If cursor is on the second number
-            if (cursorPosition > start + rangeMatch[1].length + 1) {
-              return findLineDefinition(model, endNum, position.lineNumber);
+            // If cursor is on the second reference
+            if (cursorPosition > start + startRef.length + 1) {
+              return findLineDefinition(model, endRef, position.lineNumber);
             }
             return null;
           }
 
-          // Single number
+          // Single reference (number, bc, or ih)
           if (numberPattern.test(ref)) {
-            return findLineDefinition(model, parseInt(ref), position.lineNumber);
+            return findLineDefinition(model, ref, position.lineNumber);
           }
         }
 
@@ -579,10 +573,10 @@ export const registerGeorge: OnMount = (editor, monaco) => {
     },
   });
 
-  // Helper function to find line definition
+  // Update the findLineDefinition function to handle string references
   function findLineDefinition(
     model: monaco.editor.ITextModel,
-    lineNum: number,
+    lineRef: string | number,
     currentLineNumber: number
   ) {
     // Find section boundaries
@@ -607,10 +601,10 @@ export const registerGeorge: OnMount = (editor, monaco) => {
       }
     }
 
-    // Only search for the line number within the current section
+    // Only search for the line reference within the current section
     for (let i = sectionStart; i < sectionEnd; i++) {
       const line = model.getLineContent(i);
-      const match = line.match(new RegExp(`^\\s*${lineNum}\\)`));
+      const match = line.match(new RegExp(`^\\s*${lineRef}\\)`));
       if (match) {
         return {
           uri: model.uri,
