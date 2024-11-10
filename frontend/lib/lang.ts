@@ -557,18 +557,18 @@ export const registerGeorge: OnMount = (editor, monaco) => {
             ];
             // If cursor is on the first number
             if (cursorPosition <= start + rangeMatch[1].length) {
-              return findLineDefinition(model, startNum);
+              return findLineDefinition(model, startNum, position.lineNumber);
             }
             // If cursor is on the second number
             if (cursorPosition > start + rangeMatch[1].length + 1) {
-              return findLineDefinition(model, endNum);
+              return findLineDefinition(model, endNum, position.lineNumber);
             }
             return null;
           }
 
           // Single number
           if (numberPattern.test(ref)) {
-            return findLineDefinition(model, parseInt(ref));
+            return findLineDefinition(model, parseInt(ref), position.lineNumber);
           }
         }
 
@@ -582,9 +582,33 @@ export const registerGeorge: OnMount = (editor, monaco) => {
   // Helper function to find line definition
   function findLineDefinition(
     model: monaco.editor.ITextModel,
-    lineNum: number
+    lineNum: number,
+    currentLineNumber: number
   ) {
-    for (let i = 1; i <= model.getLineCount(); i++) {
+    // Find section boundaries
+    let sectionStart = 1;
+    let sectionEnd = model.getLineCount();
+
+    // Search backwards for the nearest boundary
+    for (let i = currentLineNumber; i >= 1; i--) {
+      const line = model.getLineContent(i);
+      if (line.match(/^(?:\s*)#[qua]/) || line.match(/^(?:\s*)#check/)) {
+        sectionStart = i;
+        break;
+      }
+    }
+
+    // Search forwards for the next boundary
+    for (let i = currentLineNumber; i <= model.getLineCount(); i++) {
+      const line = model.getLineContent(i);
+      if (line.match(/^(?:\s*)#[qua]/) || line.match(/^(?:\s*)#check/)) {
+        sectionEnd = i;
+        break;
+      }
+    }
+
+    // Only search for the line number within the current section
+    for (let i = sectionStart; i < sectionEnd; i++) {
       const line = model.getLineContent(i);
       const match = line.match(new RegExp(`^\\s*${lineNum}\\)`));
       if (match) {
@@ -624,25 +648,60 @@ export const registerGeorge: OnMount = (editor, monaco) => {
   // Set the theme
   monaco.editor.setTheme("george");
 
-  // Helper function to update references in a line
+  // Update the updateReferences function to respect boundaries
   const updateReferences = (
+    model: monaco.editor.ITextModel,
     content: string,
     startNumber: number,
-    increment: boolean
+    increment: boolean,
+    currentLineNumber: number
   ) => {
-    // Match numbers after "on" that are references, capturing spaces
+    // Find the boundaries of the current section
+    let sectionStart = 1;
+    let sectionEnd = model.getLineCount();
+
+    // Search backwards for the nearest boundary
+    for (let i = currentLineNumber; i >= 1; i--) {
+      const line = model.getLineContent(i);
+      if (line.match(/^(?:\s*)#[qua]/) || line.match(/^(?:\s*)#check/)) {
+        sectionStart = i;
+        break;
+      }
+    }
+
+    // Search forwards for the next boundary
+    for (let i = currentLineNumber; i <= model.getLineCount(); i++) {
+      const line = model.getLineContent(i);
+      if (line.match(/^(?:\s*)#[qua]/) || line.match(/^(?:\s*)#check/)) {
+        sectionEnd = i;
+        break;
+      }
+    }
+
+    // Only update references if they're within the same section
     return content.replace(/\bon\s+(\d+(?:\s*,\s*\d+)*)/g, (match, numbers) => {
-      // Split by comma but capture whitespace
       const refs = numbers.split(/(\s*,\s*)/);
       const updatedRefs = refs.map((part: string) => {
-        // If it's a comma with whitespace, preserve it
         if (part.includes(",")) {
           return part;
         }
-        // If it's a number, update it
         const num = parseInt(part.trim());
-        if (!isNaN(num) && num >= startNumber) {
-          return increment ? num + 1 : num - 1;
+        // Only update if the reference points to a line within the same section
+        if (!isNaN(num)) {
+          // Find the actual line this reference points to
+          let refLine = -1;
+          for (let i = sectionStart; i <= sectionEnd; i++) {
+            const line = model.getLineContent(i);
+            const lineMatch = line.match(/^\s*(\d+)\)/);
+            if (lineMatch && parseInt(lineMatch[1]) === num) {
+              refLine = i;
+              break;
+            }
+          }
+          // Only increment/decrement if the reference is within the same section
+          if (refLine >= sectionStart && refLine <= sectionEnd && num >= startNumber) {
+            return increment ? num + 1 : num - 1;
+          }
         }
         return part;
       });
@@ -650,7 +709,7 @@ export const registerGeorge: OnMount = (editor, monaco) => {
     });
   };
 
-  // Add enter key handler to editor
+  // Update the enter key handler
   editor.onKeyDown((e) => {
     const model = editor.getModel();
     if (!model) return;
@@ -728,10 +787,32 @@ export const registerGeorge: OnMount = (editor, monaco) => {
         const currentNumber = parseInt(match[1]);
         const currentIndent = lineContent.match(/^\s*/)?.[0] || "";
 
-        // Get sequential lines after current position
+        // Find section boundaries
+        let sectionStart = 1;
+        let sectionEnd = model.getLineCount();
+
+        // Search backwards for the nearest boundary
+        for (let i = position.lineNumber; i >= 1; i--) {
+          const line = model.getLineContent(i);
+          if (line.match(/^(?:\s*)#[qua]/) || line.match(/^(?:\s*)#check/)) {
+            sectionStart = i;
+            break;
+          }
+        }
+
+        // Search forwards for the next boundary
+        for (let i = position.lineNumber; i <= model.getLineCount(); i++) {
+          const line = model.getLineContent(i);
+          if (line.match(/^(?:\s*)#[qua]/) || line.match(/^(?:\s*)#check/)) {
+            sectionEnd = i;
+            break;
+          }
+        }
+
+        // Get sequential lines within the same section
         const followingLines = [];
         let expectedNumber = currentNumber + 1;
-        for (let i = position.lineNumber + 1; i <= model.getLineCount(); i++) {
+        for (let i = position.lineNumber + 1; i < sectionEnd; i++) {
           const line = model.getLineContent(i);
           const numMatch = line.match(/^\s*(\d+)\)/);
           if (numMatch) {
@@ -763,9 +844,11 @@ export const registerGeorge: OnMount = (editor, monaco) => {
           },
           ...followingLines.map((line) => {
             const updatedContent = updateReferences(
+              model,
               line.content,
               currentNumber + 1,
-              true
+              true,
+              line.lineNumber
             );
             return {
               range: new monaco.Range(
