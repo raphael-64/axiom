@@ -100,7 +100,8 @@ export default function EditorLayout({
   // "i2dey"
   // );
 
-  const [cursorDecorations, setCursorDecorations] = useState<string[]>([]);
+  const [decorationsCollection, setDecorationsCollection] =
+    useState<monaco.editor.IEditorDecorationsCollection>();
 
   const toggleExplorer = () => {
     const panel = explorerRef.current;
@@ -324,14 +325,15 @@ export default function EditorLayout({
           if (
             updatePath === path &&
             updateClientId !== clientId &&
-            state?.user
+            state?.user &&
+            decorationsCollection
           ) {
             awareness.getStates().set(updateClientId, state);
 
             // Update cursor decorations
             if (state.user?.cursor) {
               const { position, selection } = state.user.cursor;
-              const decorations = [];
+              const decorations: monaco.editor.IModelDeltaDecoration[] = [];
 
               // Add cursor line
               decorations.push({
@@ -363,7 +365,7 @@ export default function EditorLayout({
                 });
               }
 
-              // Create dynamic styles for this user
+              // Update styles
               const styleId = `user-${updateClientId}-style`;
               let styleEl = document.getElementById(styleId);
               if (!styleEl) {
@@ -375,17 +377,20 @@ export default function EditorLayout({
               styleEl.textContent = `
                 .cursor-${updateClientId}-line {
                   border-left: 2px solid ${state.user.color};
+                  position: absolute;
+                  height: 100%;
+                  margin-left: -2px;
                 }
                 .selection-${updateClientId} {
                   background-color: ${state.user.color}33;
+                  position: absolute;
+                  pointer-events: none;
                 }
               `;
 
-              const newDecorations = editorRef.deltaDecorations(
-                cursorDecorations,
-                decorations
-              );
-              setCursorDecorations(newDecorations);
+              // Clear previous decorations and set new ones
+              decorationsCollection.clear();
+              decorationsCollection.set(decorations);
             }
           }
         }
@@ -407,15 +412,11 @@ export default function EditorLayout({
       // Add this socket listener in handleEditorContent after other socket listeners:
       socket?.on("user-left", ({ clientId, userId }) => {
         // Remove cursor decorations for disconnected user
-        if (editorRef) {
-          const styleEl = document.getElementById(`user-${clientId}-style`);
-          styleEl?.remove();
-
-          // Filter out decorations for the disconnected user
-          const oldDecorations = cursorDecorations;
-          const newDecorations = editorRef.deltaDecorations(oldDecorations, []);
-          setCursorDecorations(newDecorations);
+        if (decorationsCollection) {
+          decorationsCollection.clear();
         }
+        const styleEl = document.getElementById(`user-${clientId}-style`);
+        styleEl?.remove();
 
         // Show toast notification
         toast.info(`${userId} left the workspace`);
@@ -459,11 +460,7 @@ export default function EditorLayout({
     const closingTab = openTabs[indexToClose];
 
     // Clean up decorations for this tab
-    if (editorRef) {
-      const oldDecorations = cursorDecorations;
-      editorRef.deltaDecorations(oldDecorations, []);
-      setCursorDecorations([]);
-    }
+    decorationsCollection?.clear();
 
     setOpenTabs((prevTabs) => {
       const newTabs = prevTabs.filter((_, i) => i !== indexToClose);
@@ -508,10 +505,8 @@ export default function EditorLayout({
       monacoBinding?.destroy();
 
       // Clean up cursor decorations
-      if (editorRef) {
-        const oldDecorations = cursorDecorations;
-        editorRef.deltaDecorations(oldDecorations, []);
-      }
+      decorationsCollection?.clear();
+
       // Clean up dynamic styles
       document
         .querySelectorAll('[id^="user-"][id$="-style"]')
@@ -570,6 +565,9 @@ export default function EditorLayout({
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyG, () => {
       handleAskGeorge();
     });
+
+    const decorationsCollection = editor.createDecorationsCollection();
+    setDecorationsCollection(decorationsCollection);
   };
 
   return (
