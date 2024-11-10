@@ -49,10 +49,10 @@ export const registerGeorge: OnMount = (editor, monaco) => {
         // Line numbers - must be before regular numbers
         [/^\s*\d+\)/, "variable.language"],
 
-        // Numbers in references (after 'on') should be white - no token assigned
-        [/\bon\s+\d+(?:\s*,\s*\d+)*/, { token: "" }],
+        // Numbers in references (after 'on') should be colored like line numbers
+        [/\bon\s+(\d+(?:\s*[,-]\s*\d+)*)/g, "variable.language"],
 
-        // All numbers in expressions should be white (including those in brackets)
+        // All other numbers in expressions should be white (including those in brackets)
         // except when they're part of an identifier or line number
         [/(?<![a-zA-Z])\d+(?![a-zA-Z])/, { token: "" }],
 
