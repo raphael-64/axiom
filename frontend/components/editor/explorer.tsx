@@ -80,9 +80,9 @@ const MISC_FOLDER: FilesResponse[0] = {
 };
 
 function getStoredFolderState(folderId: string): boolean {
-  if (typeof window === 'undefined') return false;
+  if (typeof window === "undefined") return false;
   const stored = localStorage.getItem(`folder-${folderId}`);
-  return stored === 'true';
+  return stored === "true";
 }
 
 export default function Explorer({
@@ -93,7 +93,12 @@ export default function Explorer({
   userId,
 }: {
   files: FilesResponse;
-  onFileClick: (path: string, name: string, workspaceId?: string, initialContent?: string) => void;
+  onFileClick: (
+    path: string,
+    name: string,
+    workspaceId?: string,
+    initialContent?: string
+  ) => void;
   openUpload: () => void;
   openAccess: (workspaceId: string) => void;
   userId: string;
@@ -114,8 +119,8 @@ export default function Explorer({
   return (
     <ResizablePanelGroup direction="vertical">
       <ResizablePanel defaultSize={60}>
-        <div className="py-2 overflow-y-auto text-sm">
-          <div className="flex items-center justify-between mb-1 px-2">
+        <div className="h-full flex flex-col">
+          <div className="flex items-center justify-between px-2 py-2">
             <div className="font-semibold text-xs text-muted-foreground">
               Explorer
             </div>
@@ -130,31 +135,33 @@ export default function Explorer({
               <Upload className="!size-3" />
             </TooltipButton>
           </div>
-          <FolderItem
-            key={MISC_FOLDER.name}
-            folder={MISC_FOLDER}
-            onFileClick={(path, name) => {
-              if (path === "Miscellaneous/scratchpad.grg") {
-                const content = localStorage.getItem(path) || "";
-                onFileClick(path, name, undefined, content);
-              } else {
-                onFileClick(path, name);
-              }
-            }}
-          />
-          {files.map((folder) => (
+          <div className="overflow-y-auto flex-1 text-sm">
             <FolderItem
-              key={folder.name}
-              folder={folder}
-              onFileClick={onFileClick}
+              key={MISC_FOLDER.name}
+              folder={MISC_FOLDER}
+              onFileClick={(path, name) => {
+                if (path === "Miscellaneous/scratchpad.grg") {
+                  const content = localStorage.getItem(path) || "";
+                  onFileClick(path, name, undefined, content);
+                } else {
+                  onFileClick(path, name);
+                }
+              }}
             />
-          ))}
+            {files.map((folder) => (
+              <FolderItem
+                key={folder.name}
+                folder={folder}
+                onFileClick={onFileClick}
+              />
+            ))}
+          </div>
         </div>
       </ResizablePanel>
       <ResizableHandle />
       <ResizablePanel defaultSize={40} minSize={10} maxSize={50}>
-        <div className="py-2 overflow-y-auto text-sm">
-          <div className="flex items-center justify-between mb-1 px-2">
+        <div className="h-full flex flex-col">
+          <div className="flex items-center justify-between px-2 py-2">
             <div className="font-semibold text-xs text-muted-foreground">
               Workspaces
             </div>
@@ -214,23 +221,24 @@ export default function Explorer({
               </PopoverContent>
             </Popover>
           </div>
-          {/* {testWorkspaces.map((folder: FilesResponse[0]) => ( */}
-          {workspacesData &&
-          workspacesData.workspaces &&
-          workspacesData.workspaces.length > 0 ? (
-            workspacesData.workspaces?.map((workspace) => (
-              <FolderItem
-                key={workspace.id}
-                workspace={workspace}
-                onFileClick={onFileClick}
-                openAccess={openAccess}
-              />
-            ))
-          ) : (
-            <div className="text-muted-foreground text-xs px-2">
-              No workspaces found.
-            </div>
-          )}
+          <div className="overflow-y-auto flex-1 text-sm">
+            {workspacesData &&
+            workspacesData.workspaces &&
+            workspacesData.workspaces.length > 0 ? (
+              workspacesData.workspaces?.map((workspace) => (
+                <FolderItem
+                  key={workspace.id}
+                  workspace={workspace}
+                  onFileClick={onFileClick}
+                  openAccess={openAccess}
+                />
+              ))
+            ) : (
+              <div className="text-muted-foreground text-xs px-2">
+                No workspaces found.
+              </div>
+            )}
+          </div>
         </div>
       </ResizablePanel>
     </ResizablePanelGroup>
@@ -245,7 +253,12 @@ function FolderItem({
 }: {
   folder?: FilesResponse[0];
   workspace?: Workspace;
-  onFileClick: (path: string, name: string, workspaceId?: string, initialContent?: string) => void;
+  onFileClick: (
+    path: string,
+    name: string,
+    workspaceId?: string,
+    initialContent?: string
+  ) => void;
   openAccess?: (workspaceId: string) => void;
 }) {
   const folderId = workspace?.id || folder?.name || "";
@@ -373,7 +386,12 @@ function File({
     name: string;
     path: string;
   };
-  onFileClick: (path: string, name: string, workspaceId?: string, initialContent?: string) => void;
+  onFileClick: (
+    path: string,
+    name: string,
+    workspaceId?: string,
+    initialContent?: string
+  ) => void;
   workspaceId?: string;
 }) {
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
