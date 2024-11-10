@@ -7,17 +7,21 @@ An editor for George, for [SE212 (Logic and Computation](https://student.cs.uwat
 - Fully customizable layout with collapsible and resizeable panels
 - Keyboard shortcuts for all major features
 - Multiplayer collaboration with workspaces
+  - Invite classmates by WatIAM ID
+  - Manage collaborators and invitations
+  - View other cursors and selections
 - VSCode-like editor features and shortcuts (we use the same editor library as VSCode)
+- Todo: Customizable editor colours
 - Intelligent language support
-  - Auto-closing braces and indentations
   - Comments
-  - Line numbers
-    - Go to definition
-    - Hover to show rule definition
-    - Incrementing and decrementing numbers
-    - Remove empty lines with line numbers with `Enter`
-    - Auto-updating rule references
-    - Todo: Cuts off above and below at `#check x`
+  - Auto-closing braces and indentations
+  - Jump to line definition (`⌘ + Click`)
+  - Hover to show rule definition
+  - Auto-incrementing line numbers
+  - Remove empty lines with line numbers with `Enter`
+  - Auto-updating rule references
+  - Cuts off above and below at `#check x`
+  - Hover tooltip for rule definitions
 
 ## Running Locally
 
