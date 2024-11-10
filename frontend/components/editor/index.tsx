@@ -100,6 +100,8 @@ export default function EditorLayout({
   // "i2dey"
   // );
 
+  const [cursorDecorations, setCursorDecorations] = useState<string[]>([]);
+
   const toggleExplorer = () => {
     const panel = explorerRef.current;
     if (panel) {
@@ -253,11 +255,14 @@ export default function EditorLayout({
         return colors[Math.floor(Math.random() * colors.length)];
       };
 
-      // Update with user info
+      const clientId = socket?.id;
+      if (!clientId) return;
+
       awareness.setLocalState({
         user: {
+          id: clientId,
           name: userId,
-          color: getRandomColor(), // Helper to generate unique colors
+          color: getRandomColor(),
           cursor: null,
         },
       });
@@ -291,50 +296,102 @@ export default function EditorLayout({
           updated,
           removed,
         }: {
-          added: any;
-          updated: any;
-          removed: any;
+          added: number[];
+          updated: number[];
+          removed: number[];
         }) => {
-          const states = Array.from(awareness.getStates().values());
-          console.log(states);
-          // Update UI to show other users' cursors/selections
-        }
-      );
+          const states = Array.from(awareness.getStates().entries());
+          console.log("Local client ID:", clientId);
+          console.log("Current awareness states:", states);
 
-      // Add inside handleEditorContent after awareness initialization
-      awareness.on(
-        "change",
-        ({
-          added,
-          updated,
-          removed,
-        }: {
-          added: any;
-          updated: any;
-          removed: any;
-        }) => {
-          const states = Array.from(awareness.getStates().values());
-          console.log(states);
-
-          // Send our state to server
-          socket?.emit("awareness", {
-            workspaceId,
-            state: awareness.getLocalState(),
-          });
+          // Only send our own state
+          const localState = awareness.getLocalState();
+          if (localState) {
+            socket?.emit("awareness", {
+              workspaceId,
+              path,
+              clientId,
+              state: localState,
+            });
+          }
         }
       );
 
       // Add socket listener after other socket events
-      socket?.on("awareness-update", ({ path: updatePath, states }) => {
-        // Only update awareness if we're viewing this file
-        if (updatePath === path) {
-          states.forEach(([clientId, state]: [string, any]) => {
-            if (state && state.user) {
-              awareness.setLocalStateField("user", state.user);
+      socket?.on(
+        "awareness-update",
+        ({ path: updatePath, clientId: updateClientId, state }) => {
+          if (
+            updatePath === path &&
+            updateClientId !== clientId &&
+            state?.user
+          ) {
+            awareness.getStates().set(updateClientId, state);
+
+            // Update cursor decorations
+            if (state.user?.cursor) {
+              const { position, selection } = state.user.cursor;
+              const decorations = [];
+
+              // Add cursor line
+              decorations.push({
+                range: new monacoInstance.Range(
+                  position.lineNumber,
+                  position.column,
+                  position.lineNumber,
+                  position.column + 1
+                ),
+                options: {
+                  className: `cursor-${updateClientId}`,
+                  beforeContentClassName: `cursor-${updateClientId}-line`,
+                  hoverMessage: { value: state.user.name },
+                },
+              });
+
+              // Add selection if exists
+              if (selection) {
+                decorations.push({
+                  range: new monacoInstance.Range(
+                    selection.startLineNumber,
+                    selection.startColumn,
+                    selection.endLineNumber,
+                    selection.endColumn
+                  ),
+                  options: {
+                    className: `selection-${updateClientId}`,
+                  },
+                });
+              }
+
+              // Create dynamic styles for this user
+              const styleId = `user-${updateClientId}-style`;
+              let styleEl = document.getElementById(styleId);
+              if (!styleEl) {
+                styleEl = document.createElement("style");
+                styleEl.id = styleId;
+                document.head.appendChild(styleEl);
+              }
+
+              styleEl.textContent = `
+                .cursor-${updateClientId}-line {
+                  border-left: 2px solid ${state.user.color};
+                }
+                .selection-${updateClientId} {
+                  background-color: ${state.user.color}33;
+                }
+              `;
+
+              // Update decorations
+              const oldDecorations = cursorDecorations;
+              const newDecorations = editorRef.deltaDecorations(
+                oldDecorations,
+                decorations
+              );
+              setCursorDecorations(newDecorations);
             }
-          });
+          }
         }
-      });
+      );
 
       // Add cursor position tracking
       editorRef.onDidChangeCursorPosition((e) => {
@@ -347,6 +404,23 @@ export default function EditorLayout({
             },
           });
         }
+      });
+
+      // Add this socket listener in handleEditorContent after other socket listeners:
+      socket?.on("user-left", ({ clientId, userId }) => {
+        // Remove cursor decorations for disconnected user
+        if (editorRef) {
+          const styleEl = document.getElementById(`user-${clientId}-style`);
+          styleEl?.remove();
+
+          // Filter out decorations for the disconnected user
+          const oldDecorations = cursorDecorations;
+          const newDecorations = editorRef.deltaDecorations(oldDecorations, []);
+          setCursorDecorations(newDecorations);
+        }
+
+        // Show toast notification
+        toast.info(`${userId} left the workspace`);
       });
     } else {
       // Local file
@@ -385,6 +459,13 @@ export default function EditorLayout({
   // Clean up when closing tabs
   const handleTabClose = (indexToClose: number) => {
     const closingTab = openTabs[indexToClose];
+
+    // Clean up decorations for this tab
+    if (editorRef) {
+      const oldDecorations = cursorDecorations;
+      editorRef.deltaDecorations(oldDecorations, []);
+      setCursorDecorations([]);
+    }
 
     setOpenTabs((prevTabs) => {
       const newTabs = prevTabs.filter((_, i) => i !== indexToClose);
@@ -427,6 +508,16 @@ export default function EditorLayout({
       workspaceDocsRef.current.forEach((doc) => doc.destroy());
       workspaceDocsRef.current.clear();
       monacoBinding?.destroy();
+
+      // Clean up cursor decorations
+      if (editorRef) {
+        const oldDecorations = cursorDecorations;
+        editorRef.deltaDecorations(oldDecorations, []);
+      }
+      // Clean up dynamic styles
+      document
+        .querySelectorAll('[id^="user-"][id$="-style"]')
+        .forEach((el) => el.remove());
     };
   }, []);
 

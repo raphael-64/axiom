@@ -146,7 +146,7 @@ const handleConnection = (io) => {
                 content,
             });
         });
-        socket.on("awareness", ({ workspaceId, state }) => {
+        socket.on("awareness", ({ workspaceId, path, clientId, state }) => {
             const clientFile = clientFiles.get(socket.id);
             if (!clientFile || clientFile.workspaceId !== workspaceId)
                 return;
@@ -173,8 +173,9 @@ const handleConnection = (io) => {
             console.log("========================\n");
             // Only broadcast to others viewing the same file
             socket.to(workspaceId).emit("awareness-update", {
-                path: clientFile.path,
-                states: Array.from(fileStates.entries()),
+                path,
+                clientId,
+                state,
             });
         });
         socket.on("disconnect", () => __awaiter(void 0, void 0, void 0, function* () {
@@ -211,6 +212,7 @@ function handleLeaveRoom(socket, workspaceId, userId) {
         workspace.clients.delete(socket.id);
         // Notify others that user left
         socket.to(workspaceId).emit("user-left", {
+            clientId: socket.id,
             userId,
         });
         // Delete workspace in memory if no connected clients left

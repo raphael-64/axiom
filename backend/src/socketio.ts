@@ -147,7 +147,7 @@ export const handleConnection = (io: Server) => {
       });
     });
 
-    socket.on("awareness", ({ workspaceId, state }) => {
+    socket.on("awareness", ({ workspaceId, path, clientId, state }) => {
       const clientFile = clientFiles.get(socket.id);
       if (!clientFile || clientFile.workspaceId !== workspaceId) return;
 
@@ -175,8 +175,9 @@ export const handleConnection = (io: Server) => {
 
       // Only broadcast to others viewing the same file
       socket.to(workspaceId).emit("awareness-update", {
-        path: clientFile.path,
-        states: Array.from(fileStates.entries()),
+        path,
+        clientId,
+        state,
       });
     });
 
@@ -222,6 +223,7 @@ async function handleLeaveRoom(
 
   // Notify others that user left
   socket.to(workspaceId).emit("user-left", {
+    clientId: socket.id,
     userId,
   });
 
