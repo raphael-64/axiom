@@ -1,6 +1,6 @@
-# SE212 Interface
+# Axiom
 
-An editor for George, for [SE212 (Logic and Computation](https://student.cs.uwaterloo.ca/~se212/notes.html) at the University of Waterloo.
+An editor interface for George, for [SE212 (Logic and Computation](https://student.cs.uwaterloo.ca/~se212/notes.html) at the University of Waterloo.
 
 - Local assignment and project files, persisted in local storage
 - Tabs for opening multiple files
