@@ -128,6 +128,7 @@ app.post("/api/workspaces/invite", (req, res) => __awaiter(void 0, void 0, void 
         res.json({ inviteId: invite.id });
     }
     catch (error) {
+        console.error("Failed to create invite", error);
         res.status(500).json({ message: "Failed to create invite" });
     }
 }));

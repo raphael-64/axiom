@@ -169,13 +169,15 @@ export default function SettingsModal({
                                   {invite.workspace.project}
                                 </div>
                                 <div className="text-muted-foreground text-xs">
-                                  {invite.workspace.users.length} users
+                                  {invite.workspace.users.length} user
+                                  {invite.workspace.users.length === 1
+                                    ? ""
+                                    : "s"}
                                 </div>
                               </div>
                               <div className="flex gap-2">
                                 <Button
                                   size="sm"
-                                  variant="outline"
                                   disabled={respondToInvite.isPending}
                                   onClick={() => {
                                     if (hasConflict) {

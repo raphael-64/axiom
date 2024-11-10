@@ -13,8 +13,12 @@ import {
   getInvites,
   useRemoveCollaborator,
   useDeleteInvite,
+  useCollaborators,
+  useWorkspaceInvites,
+  useCreateInvite,
 } from "@/lib/query";
 import type { Collaborator, Invite } from "@/lib/types";
+import { useState } from "react";
 
 export default function ManageAccessModal({
   open,
@@ -27,18 +31,14 @@ export default function ManageAccessModal({
   workspaceId: string | null;
   userId: string;
 }) {
-  const { data: collaborators = [], isLoading: loadingCollaborators } =
-    useQuery<Collaborator[]>({
-      queryKey: ["collaborators", workspaceId],
-      queryFn: () => getCollaborators(workspaceId!, userId),
-      enabled: !!workspaceId,
-    });
+  const [inviteUsername, setInviteUsername] = useState("");
+  const createInvite = useCreateInvite();
 
-  const { data: invites = [], isLoading: loadingInvites } = useQuery<Invite[]>({
-    queryKey: ["invites", workspaceId],
-    queryFn: () => getInvites(workspaceId!),
-    enabled: !!workspaceId,
-  });
+  const { data: collaborators = [], isLoading: loadingCollaborators } =
+    useCollaborators(workspaceId, userId);
+
+  const { data: invites = [], isLoading: loadingInvites } =
+    useWorkspaceInvites(workspaceId);
 
   const removeCollaborator = useRemoveCollaborator();
   const deleteInvite = useDeleteInvite();
@@ -59,6 +59,15 @@ export default function ManageAccessModal({
     });
   };
 
+  const handleInvite = () => {
+    if (!workspaceId || !inviteUsername) return;
+    createInvite.mutate({
+      userId: inviteUsername,
+      workspaceId,
+    });
+    setInviteUsername(""); // Clear input after sending
+  };
+
   if (!workspaceId) return null;
 
   return (
@@ -69,9 +78,22 @@ export default function ManageAccessModal({
             <DialogTitle>Manage Workspace Access</DialogTitle>
           </DialogHeader>
           <div className="flex gap-2 w-full">
-            <Input placeholder="Username (e.g. i2dey)" />
-            <Button size="sm" variant="secondary">
-              <Plus className="!size-3" />
+            <Input
+              placeholder="Username (e.g. i2dey)"
+              value={inviteUsername}
+              onChange={(e) => setInviteUsername(e.target.value)}
+            />
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={handleInvite}
+              disabled={createInvite.isPending || !inviteUsername}
+            >
+              {createInvite.isPending ? (
+                <Loader2 className="animate-spin !size-3" />
+              ) : (
+                <Plus className="!size-3" />
+              )}
               Invite
             </Button>
           </div>
