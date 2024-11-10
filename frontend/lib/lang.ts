@@ -602,15 +602,14 @@ export const registerGeorge: OnMount = (editor, monaco) => {
     rules: [
       { token: "comment", foreground: "666666" },
       { token: "constant.other", foreground: "569CD6" },
-      { token: "keyword", foreground: "C586C0" },
-      { token: "constant.language", foreground: "4EC9B0" },
-      { token: "constant.numeric", foreground: "B5CEA8" },
-      { token: "string", foreground: "CE9178" },
-      { token: "variable.language", foreground: "9CDCFE" },
-      { token: "string.regexp", foreground: "D16969" },
+      { token: "keyword", foreground: "aeaeeb" },
+      { token: "constant.language", foreground: "D99FF1" },
+      { token: "constant.numeric", foreground: "aeaeeb" },
+      { token: "string", foreground: "9AEFEA" },
+      { token: "variable.language", foreground: "85B1E0" },
     ],
     colors: {
-      "editor.foreground": "#D4D4D4",
+      "editor.foreground": "#E4E4E6",
       "editor.background": "#0A0A0A",
     },
   });
