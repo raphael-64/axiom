@@ -591,7 +591,7 @@ export default function EditorLayout({
       <div className="w-full h-full flex flex-col">
         <div className="w-full flex items-center justify-between border-b p-1.5 px-2">
           <div className="flex items-center gap-2">
-            <div className="font-semibold">SE212</div>
+            <div className="font-semibold">Axiom</div>
             <TooltipButton
               variant="secondary"
               size="sm"

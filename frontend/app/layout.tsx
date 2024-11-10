@@ -15,7 +15,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "SE212 Interface",
+  title: "Axiom",
   description: "SE212 Interface",
 };
 
