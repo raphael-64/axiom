@@ -227,15 +227,6 @@ async function handleLeaveRoom(
     userId,
   });
 
-  // Delete workspace in memory if no connected clients left
-  if (workspace.clients.size === 0) {
-    workspace.docs.forEach((doc, path) => {
-      workspace.docs.delete(path);
-    });
-
-    workspaces.delete(workspaceId); // Delete workspace in memory
-  }
-
   // Clean up awareness data
   const clientFile = clientFiles.get(socket.id);
   if (clientFile) {
@@ -253,13 +244,21 @@ async function handleLeaveRoom(
           fileAwareness.delete(workspaceId);
         }
 
-        // Notify others viewing this file
-        socket.to(workspaceId).emit("awareness-update", {
-          path: clientFile.path,
-          states: Array.from(fileStates.entries()),
-        });
+        // Remove this section - don't send awareness update on leave
+        // socket.to(workspaceId).emit("awareness-update", {
+        //   path: clientFile.path,
+        //   states: Array.from(fileStates.entries()),
+        // });
       }
     }
     clientFiles.delete(socket.id);
+  }
+
+  // Delete workspace in memory if no connected clients left
+  if (workspace.clients.size === 0) {
+    workspace.docs.forEach((doc, path) => {
+      workspace.docs.delete(path);
+    });
+    workspaces.delete(workspaceId);
   }
 }

@@ -381,10 +381,8 @@ export default function EditorLayout({
                 }
               `;
 
-              // Update decorations
-              const oldDecorations = cursorDecorations;
               const newDecorations = editorRef.deltaDecorations(
-                oldDecorations,
+                cursorDecorations,
                 decorations
               );
               setCursorDecorations(newDecorations);
