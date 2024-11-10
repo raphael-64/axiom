@@ -41,13 +41,19 @@ export const registerGeorge: OnMount = (editor, monaco) => {
         [/\/\/.*$/, "comment"],
 
         // Entire lines starting with # should be colored
-        [/^.*#(?:check\s+(?:PROP|ND|PC|Z|TP|ST|PRED|NONE)|[qua][ \t].*$)/, "constant.other"],
+        [
+          /^.*#(?:check\s+(?:PROP|ND|PC|Z|TP|ST|PRED|NONE)|[qua][ \t].*$)/,
+          "constant.other",
+        ],
 
         // Line numbers - must be before regular numbers
         [/^\s*(?:\d+|bc|ih)\)/, "variable.language"],
 
         // Numbers in references (after 'on') should be colored like line numbers
-        [/\bon\s+((?:\d+|bc|ih)(?:\s*[,-]\s*(?:\d+|bc|ih))*)/g, "variable.language"],
+        [
+          /\bon\s+((?:\d+|bc|ih)(?:\s*[,-]\s*(?:\d+|bc|ih))*)/g,
+          "variable.language",
+        ],
 
         // All other numbers in expressions should be white (including those in brackets)
         // except when they're part of an identifier or line number
@@ -693,7 +699,11 @@ export const registerGeorge: OnMount = (editor, monaco) => {
             }
           }
           // Only increment/decrement if the reference is within the same section
-          if (refLine >= sectionStart && refLine <= sectionEnd && num >= startNumber) {
+          if (
+            refLine >= sectionStart &&
+            refLine <= sectionEnd &&
+            num >= startNumber
+          ) {
             return increment ? num + 1 : num - 1;
           }
         }
