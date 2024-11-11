@@ -442,8 +442,14 @@ export default function EditorLayout({
   ) => {
     // Check if trying to open file from different workspace
     if (workspaceId && activeWorkspaceId && workspaceId !== activeWorkspaceId) {
-      const workspaceName = openTabs.find(tab => tab.workspaceId === activeWorkspaceId)?.name;
-      toast.error(workspaceName ? `Another workspace (${workspaceName}) is already open.` : "Another workspace is already open.");
+      const workspaceName = openTabs.find(
+        (tab) => tab.workspaceId === activeWorkspaceId
+      )?.name;
+      toast.error(
+        workspaceName
+          ? `Another workspace (${workspaceName}) is already open.`
+          : "Another workspace is already open."
+      );
       return;
     }
 
@@ -699,7 +705,7 @@ export default function EditorLayout({
                         bottom: 4,
                         top: 4,
                       },
-                      scrollBeyondLastLine: false,
+                      scrollBeyondLastLine: true,
                       fixedOverflowWidgets: true,
                       autoClosingBrackets: "always",
                       autoClosingQuotes: "always",
