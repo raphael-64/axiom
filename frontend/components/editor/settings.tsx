@@ -21,6 +21,7 @@ import { useUserInvites, useRespondToInvite, useWorkspaces } from "@/lib/query";
 import { toast } from "sonner";
 import { InviteWithWorkspace } from "@/lib/types";
 import { RotateCw } from "lucide-react";
+import { TooltipButton } from "../tooltip-button";
 
 type Category = "editor" | "shortcuts" | "invites";
 
@@ -58,7 +59,11 @@ export default function SettingsModal({
   }, [open]);
 
   const { data: workspaces } = useWorkspaces(userId);
-  const { data: invites, refetch: refetchInvites } = useUserInvites(userId);
+  const {
+    data: invites,
+    refetch: refetchInvites,
+    isLoading: invitesLoading,
+  } = useUserInvites(userId);
   const respondToInvite = useRespondToInvite();
 
   return (
@@ -82,8 +87,21 @@ export default function SettingsModal({
             ))}
           </div>
           <div className="grow">
-            <div className="font-semibold p-4 pb-0">
-              {categories.find((c) => c.id === activeCategory)?.label}
+            <div className="flex items-center p-4 pb-0 gap-1">
+              <div className="font-semibold">
+                {categories.find((c) => c.id === activeCategory)?.label}
+              </div>
+              {activeCategory === "invites" && (
+                <TooltipButton
+                  tooltip="Refetch invites"
+                  disabled={invites === undefined || invitesLoading}
+                  variant="ghost"
+                  size="xsIcon"
+                  onClick={() => refetchInvites()}
+                >
+                  <RotateCw className="!size-3.5" />
+                </TooltipButton>
+              )}
             </div>
             <div className="p-4 overflow-y-auto">
               {activeCategory === "editor" ? (
@@ -139,91 +157,77 @@ export default function SettingsModal({
                   ))}
                 </div>
               ) : activeCategory === "invites" ? (
-                <div className="space-y-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="font-medium">Pending Invites</div>
-                    <Button 
-                      size="sm" 
-                      variant="secondary" 
-                      onClick={() => refetchInvites()}
-                    >
-                      <RotateCw className={`size-4`} />
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    {!invites ? (
-                      <div className="text-sm text-muted-foreground flex items-center">
-                        <RotateCw className="animate-spin size-4 mr-2" />
-                        Loading...
-                      </div>
-                    ) : invites.length === 0 ? (
-                      <div className="text-sm text-muted-foreground">
-                        No pending invites.
-                      </div>
-                    ) : (
-                      invites.map((invite: InviteWithWorkspace) => {
-                        const hasConflict = workspaces?.workspaces?.some(
-                          (w) =>
-                            w.project === invite.workspace.project &&
-                            !w.invites.some((i) => i.id === invite.id)
-                        );
+                <div className="space-y-2">
+                  {!invites ? (
+                    <div className="text-sm text-muted-foreground flex items-center">
+                      <RotateCw className="animate-spin size-4 mr-2" />
+                      Loading...
+                    </div>
+                  ) : invites.length === 0 ? (
+                    <div className="text-sm text-muted-foreground">
+                      No pending invites.
+                    </div>
+                  ) : (
+                    invites.map((invite: InviteWithWorkspace) => {
+                      const hasConflict = workspaces?.workspaces?.some(
+                        (w) =>
+                          w.project === invite.workspace.project &&
+                          !w.invites.some((i) => i.id === invite.id)
+                      );
 
-                        return (
-                          <div
-                            key={invite.id}
-                            className="border rounded-md p-3 space-y-2"
-                          >
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <div className="font-medium">
-                                  {invite.workspace.project}
-                                </div>
-                                <div className="text-muted-foreground text-xs">
-                                  {invite.workspace.users.length} user
-                                  {invite.workspace.users.length === 1
-                                    ? ""
-                                    : "s"}
-                                </div>
+                      return (
+                        <div
+                          key={invite.id}
+                          className="border rounded-md p-3 space-y-2"
+                        >
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <div className="font-medium">
+                                {invite.workspace.project}
                               </div>
-                              <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  disabled={respondToInvite.isPending}
-                                  onClick={() => {
-                                    if (hasConflict) {
-                                      toast.error(
-                                        "You already have a workspace with this project name"
-                                      );
-                                      return;
-                                    }
-                                    respondToInvite.mutate({
-                                      inviteId: invite.id,
-                                      accept: true,
-                                    });
-                                  }}
-                                >
-                                  Accept
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  disabled={respondToInvite.isPending}
-                                  onClick={() =>
-                                    respondToInvite.mutate({
-                                      inviteId: invite.id,
-                                      accept: false,
-                                    })
-                                  }
-                                >
-                                  Decline
-                                </Button>
+                              <div className="text-muted-foreground text-xs">
+                                {invite.workspace.users.length} user
+                                {invite.workspace.users.length === 1 ? "" : "s"}
                               </div>
                             </div>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                disabled={respondToInvite.isPending}
+                                onClick={() => {
+                                  if (hasConflict) {
+                                    toast.error(
+                                      "You already have a workspace with this project name"
+                                    );
+                                    return;
+                                  }
+                                  respondToInvite.mutate({
+                                    inviteId: invite.id,
+                                    accept: true,
+                                  });
+                                }}
+                              >
+                                Accept
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={respondToInvite.isPending}
+                                onClick={() =>
+                                  respondToInvite.mutate({
+                                    inviteId: invite.id,
+                                    accept: false,
+                                  })
+                                }
+                              >
+                                Decline
+                              </Button>
+                            </div>
                           </div>
-                        );
-                      })
-                    )}
-                  </div>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               ) : null}
             </div>

@@ -3,7 +3,6 @@
 // React and hooks
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useWindowSize } from "@uidotdev/usehooks";
-import { useQuery } from "@tanstack/react-query";
 
 // Monaco editor
 import monaco from "monaco-editor";
@@ -30,7 +29,7 @@ import ManageAccessModal from "./access";
 // Types and utilities
 import { FilesResponse, Tab } from "@/lib/types";
 import { registerGeorge } from "@/lib/lang";
-import { askGeorge, getFiles } from "@/lib/actions";
+import { askGeorge } from "@/lib/actions";
 import { ImperativePanelHandle } from "react-resizable-panels";
 import { toast } from "sonner";
 
@@ -678,6 +677,7 @@ export default function EditorLayout({
               onFileClick={handleFileClick}
               openUpload={() => setIsUploadOpen(true)}
               openAccess={(workspaceId) => setManageAccessId(workspaceId)}
+              disableUpload={activeTabIndex === -1}
             />
           </ResizablePanel>
           <ResizableHandle />

@@ -92,6 +92,7 @@ export default function Explorer({
   openUpload,
   openAccess,
   userId,
+  disableUpload,
 }: {
   files: FilesResponse;
   onFileClick: (
@@ -103,6 +104,7 @@ export default function Explorer({
   openUpload: () => void;
   openAccess: (workspaceId: string) => void;
   userId: string;
+  disableUpload: boolean;
 }) {
   const [createWorkspaceFolder, setCreateWorkspaceFolder] =
     useState<string>("");
@@ -127,7 +129,7 @@ export default function Explorer({
             </div>
             <TooltipButton
               variant="ghost"
-              disabled={files.length === 0}
+              disabled={files.length === 0 || disableUpload}
               size="xsIcon"
               className="!text-muted-foreground"
               tooltip="Upload File (⌘U)"
