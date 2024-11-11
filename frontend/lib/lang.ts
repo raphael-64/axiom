@@ -822,17 +822,20 @@ export const registerGeorge: OnMount = (editor, monaco) => {
 
         // Get sequential lines within the same section
         const followingLines = [];
+        let expectedNumber = currentNumber + 1;
         for (let i = position.lineNumber + 1; i < sectionEnd; i++) {
           const line = model.getLineContent(i);
           const numMatch = line.match(/^\s*(\d+)\)/);
           if (numMatch) {
             const lineNum = parseInt(numMatch[1]);
+            if (lineNum !== expectedNumber) break;
             followingLines.push({
               lineNumber: i,
               number: lineNum,
               content: line,
               indent: line.match(/^\s*/)?.[0] || "",
             });
+            expectedNumber++;
           }
         }
 
@@ -840,7 +843,6 @@ export const registerGeorge: OnMount = (editor, monaco) => {
         const newNumber = currentNumber + 1;
         const newLine = `${currentIndent}${newNumber}) `;
 
-        // When creating operations, increment ALL following line numbers
         const operations = [
           {
             range: new monaco.Range(
