@@ -353,10 +353,10 @@ function FolderItem({
         </ContextMenuTrigger>
 
         <ContextMenuContent>
-          <ContextMenuItem>
+          <ContextMenuItem onClick={() => openAccess?.(workspace.id)}>
             <Users className="!w-3 !h-3" /> Share
           </ContextMenuItem>
-          <ContextMenuItem>
+          <ContextMenuItem onClick={() => setIsConfirmOpen(true)}>
             <Trash className="!w-3 !h-3" /> Delete
           </ContextMenuItem>
         </ContextMenuContent>

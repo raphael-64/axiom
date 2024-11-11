@@ -4,30 +4,50 @@ An editor interface for George, for [SE212 (Logic and Computation)](https://stud
 
 ## Features
 
-- Multiplayer collaboration with workspaces
+- **Multiplayer collaboration with [Workspaces](#workspaces)**
   - Invite classmates by WatIAM ID
   - Manage collaborators and invitations
   - View other cursors and selections
-- Intelligent language support
-  - Comments
-  - Auto-closing braces and indentations
-  - Jump to line definition (`⌘ + Click`)
-  - Hover to show rule definition
+- **Intelligent language support**
   - Auto-incrementing line numbers
-  - Auto-decrementing line numers (`⌘ + X` or `⌘ + ⌫`)
-  - Remove empty lines with line numbers with `⏎`
+  - TODO: Auto-decrementing line numbers (`⌘+X` or `⌘+⌫`)
   - Auto-updating rule references
-  - Cuts off above and below at `#check x`
+  - Auto-closing braces and indentations
+  - Comments (`⌘+/`)
+  - Jump to line definition (`⌘+Click`)
   - Hover tooltip for rule definitions
-- Tabs for opening multiple files
-- Fully customizable layout with collapsible and resizable panels
-- Keyboard shortcuts for all major features
-- VSCode-like editor features and shortcuts (we use the same editor library as VSCode)
-- Comprehensive settings menu
+  - Boundaries above and below at `#check {x}`
+  - Remove empty lines with line numbers with `⏎`
+- **User interface**
+  - Tabs for opening multiple files
+  - Collapsible and resizable panels
+    - Sidebar explorer (`⌘+B`)
+    - George output (`⌘+J`)
+  - Keyboard shortcuts for all major features
+  - VSCode-like editor features and shortcuts (we use the same editor library as VSCode)
+  - Local assignment and project files, persisted in local storage
+  - Upload a `.grg` file into the current tab (`⌘+U`)
+  - Download the current file
+- **Settings menu (`⌘+K`)**
   - Light/dark mode
   - Toggle autocomplete
   - Individually customizable editor colours
-- Local assignment and project files, persisted in local storage
+
+## Workspaces
+
+Workspaces are shared folders for multiplayer collaboration. You can create a workspace by clicking the `+` button in the sidebar. You can invite and manage collaborators by clicking on the three dots or right-clicking on a workspace. You can view your invitations in Settings>Invites (`⌘+K`).
+
+Workspace rules:
+
+- **Permissionless**
+  - Any user in a workspace has equal permission to invite users, revoke invitations, remove collaborators, edit files, and delete the workspace
+  - Only invite users you trust!
+- **Unique folder**
+  - You can only have one workspace for a folder. For example, you cannot have more than one workspace for `Project 1`.
+  - You can not accept an invitation to a workspace for a folder that you already have access to.
+- **One at a time**
+  - You can only have one workspace open at a time in the editor
+  - Temporary limitation for backend simplicity, may be lifted in the future
 
 ## Running Locally
 
@@ -55,6 +75,10 @@ cd frontend
 npm i
 npm run dev
 ```
+
+> [!WARNING]
+> Since we're running locally without Waterloo's authentication, you must set the `watiam` property in local storage to your WatIAM ID (or any string).
+> Then create a user in the DB with that WatIAM ID for everything to work. The easiest way to do this is with prisma studio (run `npx prisma studio` in the backend directory).
 
 ### Backend
 
