@@ -531,65 +531,62 @@ export const registerGeorge: OnMount = (editor, monaco) => {
 
       const lineContent = model.getLineContent(position.lineNumber);
 
-      // Check if the word is a number, bc, ih or part of a range
-      const numberPattern = /^(?:\d+|bc|ih)$/;
-      const rangePattern = /^(\d+|bc|ih)-(\d+|bc|ih)$/;
+      // Check if we're in a reference after "on"
+      const onReferences = lineContent.match(/\bon\s+(.*?)(?=\s*(?:by|$))/);
+      if (onReferences) {
+        const referencesStr = onReferences[1];
+        const cursorPosition = position.column;
+        let currentPos = lineContent.indexOf(referencesStr);
 
-      // Get all references after "on"
-      const onMatch = lineContent.match(/\bon\s+(.*?)(?=\s*(?:by|$))/);
-      if (!onMatch) return null;
+        // Split references by commas and process each
+        const references = referencesStr.split(/\s*,\s*/);
+        for (const ref of references) {
+          const start = currentPos;
+          const end = currentPos + ref.length;
 
-      const referencesStr = onMatch[1];
-      const cursorPosition = position.column;
-
-      // Find which reference the cursor is on
-      let currentPos = lineContent.indexOf(referencesStr);
-      const references = referencesStr.split(/\s*,\s*/);
-
-      for (const ref of references) {
-        const start = currentPos;
-        const end = currentPos + ref.length;
-
-        if (cursorPosition >= start && cursorPosition <= end) {
-          // Check if it's a range (e.g., "106-120" or "bc-ih")
-          const rangeMatch = ref.match(rangePattern);
-          if (rangeMatch) {
-            const [startRef, endRef] = [rangeMatch[1], rangeMatch[2]];
-            // If cursor is on the first reference
-            if (cursorPosition <= start + startRef.length) {
-              return findLineDefinition(model, startRef, position.lineNumber);
+          if (cursorPosition >= start && cursorPosition <= end) {
+            // Handle ranges (e.g., "6-12")
+            if (ref.includes("-")) {
+              const [startRef, endRef] = ref.split("-");
+              // If cursor is on first number
+              if (cursorPosition <= start + startRef.length) {
+                return findLineDefinition(
+                  model,
+                  startRef.trim(),
+                  position.lineNumber
+                );
+              }
+              // If cursor is on second number
+              if (cursorPosition > start + startRef.length + 1) {
+                return findLineDefinition(
+                  model,
+                  endRef.trim(),
+                  position.lineNumber
+                );
+              }
+            } else {
+              // Single reference
+              return findLineDefinition(model, ref.trim(), position.lineNumber);
             }
-            // If cursor is on the second reference
-            if (cursorPosition > start + startRef.length + 1) {
-              return findLineDefinition(model, endRef, position.lineNumber);
-            }
-            return null;
           }
-
-          // Single reference (number, bc, or ih)
-          if (numberPattern.test(ref)) {
-            return findLineDefinition(model, ref, position.lineNumber);
-          }
+          currentPos = end + 1;
         }
-
-        currentPos = end + 1; // +1 for the comma
       }
 
       return null;
     },
   });
 
-  // Update the findLineDefinition function to handle string references
   function findLineDefinition(
     model: monaco.editor.ITextModel,
-    lineRef: string | number,
+    lineRef: string,
     currentLineNumber: number
   ) {
     // Find section boundaries
     let sectionStart = 1;
     let sectionEnd = model.getLineCount();
 
-    // Search backwards for the nearest boundary
+    // Search backwards for section start
     for (let i = currentLineNumber; i >= 1; i--) {
       const line = model.getLineContent(i);
       if (line.match(/^(?:\s*)#[qua]/) || line.match(/^(?:\s*)#check/)) {
@@ -598,16 +595,19 @@ export const registerGeorge: OnMount = (editor, monaco) => {
       }
     }
 
-    // Search forwards for the next boundary
+    // Search forwards for section end
     for (let i = currentLineNumber; i <= model.getLineCount(); i++) {
       const line = model.getLineContent(i);
-      if (line.match(/^(?:\s*)#[qua]/) || line.match(/^(?:\s*)#check/)) {
+      if (
+        i > currentLineNumber &&
+        (line.match(/^(?:\s*)#[qua]/) || line.match(/^(?:\s*)#check/))
+      ) {
         sectionEnd = i;
         break;
       }
     }
 
-    // Only search for the line reference within the current section
+    // Search for the line reference within current section
     for (let i = sectionStart; i < sectionEnd; i++) {
       const line = model.getLineContent(i);
       const match = line.match(new RegExp(`^\\s*${lineRef}\\)`));

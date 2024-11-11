@@ -394,14 +394,22 @@ export default function EditorLayout({
                   position: absolute;
                   pointer-events: none;
                 }
+                .monaco-editor .monaco-hover {
+                  border-color: ${state.user.color} !important;
+                }
                 .monaco-editor .monaco-hover-content {
                   background-color: ${state.user.color};
-                  border: none;
-                  border-radius: 3px;
-                  padding: 0px;
+                }
+                .monaco-editor .monaco-hover-content > * {
+                  border: none !important;
+                }
+                .monaco-editor .hover-contents {
+                  padding: 0 2px !important;
                 }
                 .monaco-editor .monaco-hover .hover-row:first-child strong {
                   color: white;
+                  font-size: 10px;
+                  font-weight: 500;
                 }
               `;
 
@@ -661,7 +669,7 @@ export default function EditorLayout({
             </TooltipButton>
           </div>
           <div className="flex items-center">
-            {socket?.connected ? (
+            {/* {socket?.connected ? (
               <div className="relative size-5 p-1 flex items-center justify-center">
                 <div className="rounded-full size-2 shrink-0 absolute animate-ping bg-green-500 opacity-75" />
                 <div className="rounded-full size-2 shrink-0 bg-green-500" />
@@ -669,7 +677,7 @@ export default function EditorLayout({
             ) : (
               <div className="rounded-full size-2 shrink-0 bg-red-500" />
             )}
-            <Input value={userId} className="mx-2" readOnly />
+            <Input value={userId} className="mx-2" readOnly /> */}
             <TooltipButton
               variant="ghost"
               size="smIcon"

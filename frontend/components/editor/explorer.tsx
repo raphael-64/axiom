@@ -121,7 +121,7 @@ export default function Explorer({
 
   return (
     <ResizablePanelGroup direction="vertical">
-      <ResizablePanel defaultSize={60}>
+      <ResizablePanel defaultSize={80}>
         <div className="h-full flex flex-col">
           <div className="flex items-center justify-between px-2 py-2">
             <div className="font-semibold text-xs text-muted-foreground">
@@ -162,7 +162,7 @@ export default function Explorer({
         </div>
       </ResizablePanel>
       <ResizableHandle />
-      <ResizablePanel defaultSize={40} minSize={10} maxSize={50}>
+      <ResizablePanel defaultSize={20} minSize={10} maxSize={50}>
         <div className="h-full flex flex-col">
           <div className="flex items-center justify-between px-2 py-2">
             <div className="font-semibold text-xs text-muted-foreground">
