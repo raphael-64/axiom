@@ -80,6 +80,6 @@ Notable files:
 
 ## Need Help?
 
-- Check existing [issues](https://github.com/your-repo/axiom/issues)
+- Check existing [issues](https://github.com/ishaan1013/axiom/issues)
 - Create a new issue
 - Ask Ishaan (i2dey@uwaterloo.ca) or Rajan (r34agarw@uwaterloo.ca)
