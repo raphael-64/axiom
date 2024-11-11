@@ -185,9 +185,10 @@ export default function SettingsModal({
                               <div className="font-medium">
                                 {invite.workspace.project}
                               </div>
-                              <div className="text-muted-foreground text-xs">
-                                {invite.workspace.users.length} user
-                                {invite.workspace.users.length === 1 ? "" : "s"}
+                              <div className="text-muted-foreground text-xs w-full overflow-hidden text-ellipsis">
+                                {invite.workspace.users
+                                  .map((u) => u.id)
+                                  .join(", ")}
                               </div>
                             </div>
                             <div className="flex gap-2">
