@@ -5,7 +5,7 @@ Thanks for your interest in contributing! This guide will help you get started.
 ## Getting Started
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/axiom.git`
+2. Clone your fork: `git clone https://github.com/ishaan1013/axiom.git`
 3. Create a new branch: `git checkout -b feature/your-feature-name`
 4. Follow the setup instructions in the [README](README.md#running-locally)
 
