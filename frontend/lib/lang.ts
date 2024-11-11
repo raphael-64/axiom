@@ -823,7 +823,7 @@ export const registerGeorge: OnMount = (editor, monaco) => {
         // Get sequential lines within the same section
         const followingLines = [];
         let expectedNumber = currentNumber + 1;
-        for (let i = position.lineNumber + 1; i < sectionEnd; i++) {
+        for (let i = position.lineNumber + 1; i <= sectionEnd; i++) {
           const line = model.getLineContent(i);
           const numMatch = line.match(/^\s*(\d+)\)/);
           if (numMatch) {
