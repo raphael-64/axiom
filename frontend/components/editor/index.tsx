@@ -531,7 +531,7 @@ export default function EditorLayout({
       const tab = openTabs[activeTabIndex];
       handleEditorContent(tab.path, tab.workspaceId);
     }
-  }, [activeId]);
+  }, [activeTabIndex, openTabs, activeId]);
 
   useEffect(() => {
     if (editorRef) {
