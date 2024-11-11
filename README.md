@@ -51,7 +51,7 @@ Workspace rules:
 
 ## Contributing
 
-Please see [CONTRIBUTING.md](CONTRIBUTING.md) for information on contributing to Axiom. If you have further questions, feel free to ask [Ishaan](i2dey@uwaterloo.ca) or [Rajan](r34agarw@uwaterloo.ca).
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for information on contributing to Axiom.
 
 ## Running Locally
 
