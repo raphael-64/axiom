@@ -6,12 +6,14 @@ import {
   respondToInvite,
   getFiles,
   deleteWorkspace,
+  getInvitesForUser,
+  getCollaborators,
+  getInvites,
+  createInvite,
 } from "@/lib/actions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Collaborator, Invite, FilesResponse, Workspace } from "./types";
 import { toast } from "sonner";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 export function useWorkspaces(userId: string) {
   return useQuery({
@@ -31,22 +33,6 @@ export function useCreateWorkspace() {
     },
   });
 }
-
-export const getCollaborators = async (workspaceId: string, userId: string) => {
-  const res = await fetch(
-    `${API_BASE_URL}/api/workspaces/${workspaceId}/users?userId=${userId}`
-  );
-  if (!res.ok) throw new Error("Failed to fetch collaborators");
-  return res.json();
-};
-
-export const getInvites = async (workspaceId: string) => {
-  const res = await fetch(
-    `${API_BASE_URL}/api/workspaces/${workspaceId}/invites`
-  );
-  if (!res.ok) throw new Error("Failed to fetch invites");
-  return res.json();
-};
 
 export function useRemoveCollaborator() {
   const queryClient = useQueryClient();
@@ -127,17 +113,10 @@ export function useRespondToInvite() {
       respondToInvite(data.inviteId, data.accept),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+      queryClient.invalidateQueries({ queryKey: ["invites"] });
     },
   });
 }
-
-export const getInvitesForUser = async (userId: string) => {
-  const res = await fetch(
-    `${API_BASE_URL}/api/workspaces/invites/user/${userId}`
-  );
-  if (!res.ok) throw new Error("Failed to fetch user invites");
-  return res.json();
-};
 
 export function useUserInvites(userId: string) {
   return useQuery({
@@ -209,19 +188,12 @@ export function useCreateInvite() {
 
   return useMutation({
     mutationFn: (data: { userId: string; workspaceId: string }) =>
-      fetch(`${API_BASE_URL}/api/workspaces/invite`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      }).then((res) => {
-        if (!res.ok) throw new Error("Failed to create invite");
-        return res.json();
-      }),
+      createInvite(data.userId, data.workspaceId),
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({ queryKey: ["invites", workspaceId] });
       toast.success("Invite sent successfully");
     },
-    onError: (error) => {
+    onError: () => {
       toast.error("Failed to send invite");
     },
   });

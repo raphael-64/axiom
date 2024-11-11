@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useUserInvites, useRespondToInvite, useWorkspaces } from "@/lib/query";
 import { toast } from "sonner";
-import { Invite, InviteWithWorkspace } from "@/lib/types";
+import { InviteWithWorkspace } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 
 type Category = "editor" | "shortcuts" | "invites";
@@ -58,7 +58,7 @@ export default function SettingsModal({
   }, [open]);
 
   const { data: workspaces } = useWorkspaces(userId);
-  const { data: invites } = useUserInvites(userId);
+  const { data: invites, refetch: refetchInvites } = useUserInvites(userId);
   const respondToInvite = useRespondToInvite();
 
   return (
@@ -69,8 +69,10 @@ export default function SettingsModal({
             {categories.map((category) => (
               <Button
                 key={category.id}
-                onClick={() => setActiveCategory(category.id)}
-                // size="sm"
+                onClick={() => {
+                  if (category.id === "invites") refetchInvites();
+                  setActiveCategory(category.id);
+                }}
                 variant={activeCategory === category.id ? "secondary" : "ghost"}
                 className="w-full justify-start"
               >

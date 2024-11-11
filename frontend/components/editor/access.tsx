@@ -7,17 +7,13 @@ import {
 import { MailX, Plus, Send, User, X, Loader2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { useQuery } from "@tanstack/react-query";
 import {
-  getCollaborators,
-  getInvites,
   useRemoveCollaborator,
   useDeleteInvite,
   useCollaborators,
   useWorkspaceInvites,
   useCreateInvite,
 } from "@/lib/query";
-import type { Collaborator, Invite } from "@/lib/types";
 import { useState } from "react";
 
 export default function ManageAccessModal({
