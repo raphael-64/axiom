@@ -47,6 +47,7 @@ import {
 } from "@/lib/query";
 import { toast } from "sonner";
 import ConfirmModal from "./confirm";
+import { downloadFile } from "@/lib/utils";
 
 const testWorkspaces: FilesResponse = [
   {
@@ -398,6 +399,14 @@ function File({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
+  const handleDownload = () => {
+    if (workspaceId) {
+      // download from backend
+    } else {
+      downloadFile(file.path);
+    }
+  };
+
   return (
     <>
       <ConfirmModal
@@ -420,12 +429,13 @@ function File({
               path={file.path}
               isOpen={isDropdownOpen}
               setIsOpen={setIsDropdownOpen}
+              handleDownload={handleDownload}
             />
           </button>
         </ContextMenuTrigger>
 
         <ContextMenuContent>
-          <ContextMenuItem>
+          <ContextMenuItem onClick={handleDownload}>
             <Download className="!w-3 !h-3" /> Download
           </ContextMenuItem>
           <ContextMenuItem onClick={() => setIsResetConfirmOpen(true)}>
@@ -487,10 +497,12 @@ function FileMenu({
   path,
   isOpen,
   setIsOpen,
+  handleDownload,
 }: {
   path: string;
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
+  handleDownload: () => void;
 }) {
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
@@ -515,10 +527,15 @@ function FileMenu({
           </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          <DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDownload();
+            }}
+          >
             <Download className="!w-3 !h-3" /> Download
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setIsResetConfirmOpen(true)}>
+          <DropdownMenuItem onClick={(e) => setIsResetConfirmOpen(true)}>
             <RotateCw className="!w-3 !h-3" /> Reset
           </DropdownMenuItem>
         </DropdownMenuContent>
