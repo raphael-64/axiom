@@ -648,7 +648,7 @@ export const registerGeorge: OnMount = (editor, monaco) => {
   // Set the theme
   monaco.editor.setTheme("george");
 
-  // Update the updateReferences function to respect boundaries
+  // Update the updateReferences function to handle ranges
   const updateReferences = (
     model: monaco.editor.ITextModel,
     content: string,
@@ -678,42 +678,49 @@ export const registerGeorge: OnMount = (editor, monaco) => {
       }
     }
 
-    // Only update references if they're within the same section
-    return content.replace(/\bon\s+(\d+(?:\s*,\s*\d+)*)/g, (match, numbers) => {
-      const refs = numbers.split(/(\s*,\s*)/);
-      const updatedRefs = refs.map((part: string) => {
-        if (part.includes(",")) {
-          return part;
-        }
-        const num = parseInt(part.trim());
-        // Only update if the reference points to a line within the same section
-        if (!isNaN(num)) {
-          // Find the actual line this reference points to
-          let refLine = -1;
-          for (let i = sectionStart; i <= sectionEnd; i++) {
-            const line = model.getLineContent(i);
-            const lineMatch = line.match(/^\s*(\d+)\)/);
-            if (lineMatch && parseInt(lineMatch[1]) === num) {
-              refLine = i;
-              break;
+    // Handle both comma-separated numbers and ranges
+    return content.replace(
+      /\bon\s+((?:\d+(?:\s*[,-]\s*\d+)*)|(?:bc|ih))/g,
+      (match, numbers) => {
+        // Split by commas first
+        const parts = numbers.split(/\s*,\s*/);
+        const updatedParts = parts.map((part: string) => {
+          // Check if it's a range (contains hyphen)
+          if (part.includes("-")) {
+            const [start, end] = part.split(/\s*-\s*/);
+            const startNum = parseInt(start);
+            const endNum = parseInt(end);
+
+            if (!isNaN(startNum) && !isNaN(endNum)) {
+              const newStart =
+                startNum >= startNumber
+                  ? increment
+                    ? startNum + 1
+                    : startNum - 1
+                  : startNum;
+              const newEnd =
+                endNum >= startNumber
+                  ? increment
+                    ? endNum + 1
+                    : endNum - 1
+                  : endNum;
+              return `${newStart}-${newEnd}`;
+            }
+          } else {
+            // Handle single number
+            const num = parseInt(part);
+            if (!isNaN(num) && num >= startNumber) {
+              return increment ? num + 1 : num - 1;
             }
           }
-          // Only increment/decrement if the reference is within the same section
-          if (
-            refLine >= sectionStart &&
-            refLine <= sectionEnd &&
-            num >= startNumber
-          ) {
-            return increment ? num + 1 : num - 1;
-          }
-        }
-        return part;
-      });
-      return `on ${updatedRefs.join("")}`;
-    });
+          return part;
+        });
+        return `on ${updatedParts.join(", ")}`;
+      }
+    );
   };
 
-  // Update the enter key handler
+  // Update the enter key handler to collect ALL following numbered lines
   editor.onKeyDown((e) => {
     const model = editor.getModel();
     if (!model) return;
@@ -815,20 +822,17 @@ export const registerGeorge: OnMount = (editor, monaco) => {
 
         // Get sequential lines within the same section
         const followingLines = [];
-        let expectedNumber = currentNumber + 1;
         for (let i = position.lineNumber + 1; i < sectionEnd; i++) {
           const line = model.getLineContent(i);
           const numMatch = line.match(/^\s*(\d+)\)/);
           if (numMatch) {
             const lineNum = parseInt(numMatch[1]);
-            if (lineNum !== expectedNumber) break;
             followingLines.push({
               lineNumber: i,
               number: lineNum,
               content: line,
               indent: line.match(/^\s*/)?.[0] || "",
             });
-            expectedNumber++;
           }
         }
 
@@ -836,6 +840,7 @@ export const registerGeorge: OnMount = (editor, monaco) => {
         const newNumber = currentNumber + 1;
         const newLine = `${currentIndent}${newNumber}) `;
 
+        // When creating operations, increment ALL following line numbers
         const operations = [
           {
             range: new monaco.Range(

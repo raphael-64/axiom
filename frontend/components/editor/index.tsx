@@ -350,7 +350,11 @@ export default function EditorLayout({
                 options: {
                   className: `cursor-${updateClientId}`,
                   beforeContentClassName: `cursor-${updateClientId}-line`,
-                  hoverMessage: { value: state.user.name },
+                  hoverMessage: {
+                    value: `**${state.user.name}**`,
+                    isTrusted: true,
+                    supportThemeIcons: true,
+                  },
                 },
               });
 
@@ -389,6 +393,15 @@ export default function EditorLayout({
                   background-color: ${state.user.color}33;
                   position: absolute;
                   pointer-events: none;
+                }
+                .monaco-editor .monaco-hover-content {
+                  background-color: ${state.user.color};
+                  border: none;
+                  border-radius: 3px;
+                  padding: 0px;
+                }
+                .monaco-editor .monaco-hover .hover-row:first-child strong {
+                  color: white;
                 }
               `;
 
