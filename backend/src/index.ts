@@ -17,7 +17,6 @@ import {
 } from "./utils";
 import cors from "cors";
 import path from "path";
-import { PrismaClient } from "@prisma/client";
 
 dotenv.config();
 

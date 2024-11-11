@@ -101,34 +101,6 @@ export default function SettingsModal({
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <label>Keybindings</label>
-                    <Select defaultValue="standard">
-                      <SelectTrigger className="w-[120px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="standard">Standard</SelectItem>
-                        <SelectItem value="vim">Vim</SelectItem>
-                        <SelectItem value="emacs">Emcs</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex items-center justify-between h-8">
-                    <div className="flex items-center gap-2">
-                      <label>Auto Line Numbering</label>
-
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <HelpCircle className="size-3 text-muted-foreground" />
-                          </TooltipTrigger>
-                          <TooltipContent>hi</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                    <Switch />
-                  </div>
                   <div className="flex items-center justify-between h-8">
                     <div className="flex items-center gap-2">
                       <label>Auto Complete</label>
@@ -145,7 +117,10 @@ export default function SettingsModal({
                     </div>
                     <Switch
                       checked={autoComplete}
-                      onCheckedChange={setAutoComplete}
+                      onCheckedChange={(checked) => {
+                        setAutoComplete(checked);
+                        localStorage.setItem("autoComplete", String(checked));
+                      }}
                     />
                   </div>
                 </div>

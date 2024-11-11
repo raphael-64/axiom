@@ -103,7 +103,10 @@ export default function EditorLayout({
   const [decorationsCollection, setDecorationsCollection] =
     useState<monaco.editor.IEditorDecorationsCollection>();
 
-  const [autoComplete, setAutoComplete] = useState(true);
+  const [autoComplete, setAutoComplete] = useState(() => {
+    const saved = localStorage.getItem("autoComplete");
+    return saved !== null ? saved === "true" : true;
+  });
 
   const toggleExplorer = () => {
     const panel = explorerRef.current;
