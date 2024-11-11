@@ -20,7 +20,7 @@ import {
 import { useUserInvites, useRespondToInvite, useWorkspaces } from "@/lib/query";
 import { toast } from "sonner";
 import { InviteWithWorkspace } from "@/lib/types";
-import { Loader2 } from "lucide-react";
+import { RotateCw } from "lucide-react";
 
 type Category = "editor" | "shortcuts" | "invites";
 
@@ -140,10 +140,20 @@ export default function SettingsModal({
                 </div>
               ) : activeCategory === "invites" ? (
                 <div className="space-y-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="font-medium">Pending Invites</div>
+                    <Button 
+                      size="sm" 
+                      variant="secondary" 
+                      onClick={() => refetchInvites()}
+                    >
+                      <RotateCw className={`size-4`} />
+                    </Button>
+                  </div>
                   <div className="space-y-2">
                     {!invites ? (
                       <div className="text-sm text-muted-foreground flex items-center">
-                        <Loader2 className="animate-spin size-4 mr-2" />
+                        <RotateCw className="animate-spin size-4 mr-2" />
                         Loading...
                       </div>
                     ) : invites.length === 0 ? (
