@@ -49,6 +49,10 @@ Workspace rules:
   - You can only have one workspace open at a time in the editor
   - Temporary limitation for backend simplicity, may be lifted in the future
 
+## Contributing
+
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for information on contributing to Axiom. If you have further questions, feel free to ask [Ishaan](i2dey@uwaterloo.ca) or [Rajan](r34agarw@uwaterloo.ca).
+
 ## Running Locally
 
 ### Frontend
