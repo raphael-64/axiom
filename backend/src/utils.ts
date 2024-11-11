@@ -1,4 +1,4 @@
-import prisma from "../prisma";
+import prisma from "./prisma";
 
 // src/utils.ts
 export const greet = (name: string): string => {

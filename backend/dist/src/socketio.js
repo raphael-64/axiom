@@ -38,7 +38,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.handleConnection = void 0;
 const Y = __importStar(require("yjs"));
 const prisma_1 = __importDefault(require("./prisma"));
-const utils_1 = require("@utils/utils");
+const utils_1 = require("./utils");
 // Map of all workspaces
 const workspaces = new Map();
 // Replace the single awarenessStates map with a file-specific one

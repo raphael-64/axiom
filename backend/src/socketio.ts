@@ -2,7 +2,7 @@ import { Server, Socket } from "socket.io";
 import * as Y from "yjs";
 
 import prisma from "./prisma";
-import { debouncedUpdateFile } from "@utils/utils";
+import { debouncedUpdateFile } from "./utils";
 
 // Data structure for a workspace
 interface Workspace {

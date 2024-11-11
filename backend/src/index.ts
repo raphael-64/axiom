@@ -14,7 +14,7 @@ import {
   getWorkspaceUsers,
   getWorkspaceInvites,
   getInvitesForUser,
-} from "./utils/utils";
+} from "./utils";
 import cors from "cors";
 import path from "path";
 import { PrismaClient } from "@prisma/client";

@@ -18,7 +18,7 @@ const http_1 = require("http");
 const fs_1 = require("fs");
 const socket_io_1 = require("socket.io");
 const socketio_1 = require("./socketio");
-const utils_1 = require("./utils/utils");
+const utils_1 = require("./utils");
 const cors_1 = __importDefault(require("cors"));
 const path_1 = __importDefault(require("path"));
 dotenv_1.default.config();
