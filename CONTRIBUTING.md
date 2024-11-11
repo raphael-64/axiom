@@ -76,7 +76,7 @@ Notable files:
   - `backend/src/index.ts` - Backend entry point and HTTP route handling
   - `backend/src/socketio.ts` - Socket.io event handling for workspace collaboration
   - `backend/src/utils.ts` - Prisma client operations; _write all database operations here_
-  - `backend/src/prisma/schema.prisma` - Prisma database schema
+  - `backend/prisma/schema.prisma` - Prisma database schema
 
 ## Need Help?
 
