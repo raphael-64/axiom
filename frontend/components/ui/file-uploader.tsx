@@ -148,7 +148,9 @@ export function FileUploader(props: FileUploaderProps) {
         updatedFiles.length <= maxFileCount
       ) {
         const target =
-          updatedFiles.length > 0 ? `${updatedFiles.length} files` : `file`;
+          updatedFiles.length > 1
+            ? `${updatedFiles.length} files`
+            : `File ${updatedFiles[0].name}`;
 
         toast.promise(onUpload(updatedFiles), {
           loading: `Uploading ${target}...`,
@@ -235,7 +237,8 @@ export function FileUploader(props: FileUploaderProps) {
           </div>
         )}
       </Dropzone>
-      {files?.length ? (
+      {/* Hide file preview */}
+      {/* {files?.length ? (
         <ScrollArea className="h-fit w-full px-3">
           <div className="flex max-h-48 flex-col gap-4">
             {files?.map((file, index) => (
@@ -248,7 +251,7 @@ export function FileUploader(props: FileUploaderProps) {
             ))}
           </div>
         </ScrollArea>
-      ) : null}
+      ) : null} */}
     </div>
   );
 }

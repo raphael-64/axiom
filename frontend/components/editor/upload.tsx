@@ -14,11 +14,13 @@ import { useState } from "react";
 export function UploadModal({
   open,
   setOpen,
+  handleUpload,
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
+  handleUpload: (files: File[]) => Promise<void>;
 }) {
-  const [files, setFiles] = useState<File[]>([]);
+  // const [files, setFiles] = useState<File[]>([]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -31,8 +33,12 @@ export function UploadModal({
         </DialogHeader>
         <FileUploader
           maxFileCount={1}
+          accept={{
+            ".grg": [],
+          }}
           maxSize={1 * 1024 * 1024}
-          onValueChange={setFiles}
+          // onValueChange={setFiles}
+          onUpload={handleUpload}
         />
       </DialogContent>
     </Dialog>

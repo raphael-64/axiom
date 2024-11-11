@@ -1,7 +1,7 @@
 "use client";
 
 // React and hooks
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWindowSize } from "@uidotdev/usehooks";
 
 // Monaco editor
@@ -555,6 +555,22 @@ export default function EditorLayout({
     }
   }, [autoComplete]);
 
+  const handleUpload = useCallback(
+    async (files: File[]) => {
+      const file = files[0];
+      if (!file || !editorRef) return;
+
+      setIsUploadOpen(false);
+
+      const content = await file.text();
+      const model = editorRef.getModel();
+      if (model) {
+        model.setValue(content);
+      }
+    },
+    [editorRef]
+  );
+
   if (!width) return null;
 
   const percentSizes = {
@@ -625,7 +641,11 @@ export default function EditorLayout({
         autoComplete={autoComplete}
         setAutoComplete={setAutoComplete}
       />
-      <UploadModal open={isUploadOpen} setOpen={setIsUploadOpen} />
+      <UploadModal
+        open={isUploadOpen}
+        setOpen={setIsUploadOpen}
+        handleUpload={handleUpload}
+      />
       <div className="w-full h-full flex flex-col">
         <div className="w-full flex items-center justify-between border-b p-1.5 px-2">
           <div className="flex items-center gap-2">
