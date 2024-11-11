@@ -1,27 +1,33 @@
-# SE212 Interface
+# Axiom
 
-An editor for George, for [SE212 (Logic and Computation](https://student.cs.uwaterloo.ca/~se212/notes.html) at the University of Waterloo.
+An editor interface for George, for [SE212 (Logic and Computation)](https://student.cs.uwaterloo.ca/~se212/notes.html) at the University of Waterloo.
 
-- Local assignment and project files, persisted in local storage
-- Tabs for opening multiple files
-- Fully customizable layout with collapsible and resizeable panels
-- Keyboard shortcuts for all major features
+## Features
+
 - Multiplayer collaboration with workspaces
   - Invite classmates by WatIAM ID
   - Manage collaborators and invitations
   - View other cursors and selections
-- VSCode-like editor features and shortcuts (we use the same editor library as VSCode)
-- Todo: Customizable editor colours
 - Intelligent language support
   - Comments
   - Auto-closing braces and indentations
   - Jump to line definition (`⌘ + Click`)
   - Hover to show rule definition
   - Auto-incrementing line numbers
-  - Remove empty lines with line numbers with `Enter`
+  - Auto-decrementing line numers (`⌘ + X` or `⌘ + ⌫`)
+  - Remove empty lines with line numbers with `⏎`
   - Auto-updating rule references
   - Cuts off above and below at `#check x`
   - Hover tooltip for rule definitions
+- Tabs for opening multiple files
+- Fully customizable layout with collapsible and resizable panels
+- Keyboard shortcuts for all major features
+- VSCode-like editor features and shortcuts (we use the same editor library as VSCode)
+- Comprehensive settings menu
+  - Light/dark mode
+  - Toggle autocomplete
+  - Individually customizable editor colours
+- Local assignment and project files, persisted in local storage
 
 ## Running Locally
 
