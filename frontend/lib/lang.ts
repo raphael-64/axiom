@@ -2,6 +2,9 @@ import { OnMount } from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
 import { ruleDefinitions } from "./rules";
 
+/**
+ * Registers the George language with Monaco editor and sets up syntax highlighting and completion suggestions.
+ */
 export const registerGeorge: OnMount = (editor, monaco) => {
   // Register the george language
   monaco.languages.register({ id: "george" });
@@ -577,6 +580,15 @@ export const registerGeorge: OnMount = (editor, monaco) => {
     },
   });
 
+  /**
+   * Finds the definition of a line reference within the current proof section.
+   * A proof section is delimited by #q, #u, #a or #check markers.
+   * Returns the range of the referenced line if found, null otherwise.
+   *
+   * @param model - The Monaco editor model
+   * @param lineRef - The line reference to find (e.g. "1", "bc", "ih")
+   * @param currentLineNumber - The line number where the reference appears
+   */
   function findLineDefinition(
     model: monaco.editor.ITextModel,
     lineRef: string,
@@ -626,29 +638,17 @@ export const registerGeorge: OnMount = (editor, monaco) => {
     return null;
   }
 
-  // Define theme colors
-  monaco.editor.defineTheme("george", {
-    base: "vs-dark",
-    inherit: true,
-    rules: [
-      { token: "comment", foreground: "666666" },
-      { token: "constant.other", foreground: "569CD6" },
-      { token: "keyword", foreground: "aeaeeb" },
-      { token: "constant.language", foreground: "D99FF1" },
-      { token: "constant.numeric", foreground: "aeaeeb" },
-      { token: "string", foreground: "9AEFEA" },
-      { token: "variable.language", foreground: "85B1E0" },
-    ],
-    colors: {
-      "editor.foreground": "#E4E4E6",
-      "editor.background": "#0A0A0A",
-    },
-  });
-
-  // Set the theme
-  monaco.editor.setTheme("george");
-
-  // Update the updateReferences function to handle ranges
+  /**
+   * Updates line number references in proof steps when lines are added or removed.
+   * Handles both individual numbers and ranges in 'on' statements.
+   *
+   * @param model - The Monaco editor model
+   * @param content - The line content to update references in
+   * @param startNumber - The line number to start updating references from
+   * @param increment - Whether to increment (true) or decrement (false) the references
+   * @param currentLineNumber - The current line number in the editor
+   * @returns The updated content with adjusted line references
+   */
   const updateReferences = (
     model: monaco.editor.ITextModel,
     content: string,
@@ -656,11 +656,11 @@ export const registerGeorge: OnMount = (editor, monaco) => {
     increment: boolean,
     currentLineNumber: number
   ) => {
-    // Find the boundaries of the current section
+    // Find the current proof section boundaries
     let sectionStart = 1;
     let sectionEnd = model.getLineCount();
 
-    // Search backwards for the nearest boundary
+    // Search backwards for section start (#q, #u, #a or #check)
     for (let i = currentLineNumber; i >= 1; i--) {
       const line = model.getLineContent(i);
       if (line.match(/^(?:\s*)#[qua]/) || line.match(/^(?:\s*)#check/)) {
@@ -669,7 +669,7 @@ export const registerGeorge: OnMount = (editor, monaco) => {
       }
     }
 
-    // Search forwards for the next boundary
+    // Search forwards for section end (next #q, #u, #a or #check)
     for (let i = currentLineNumber; i <= model.getLineCount(); i++) {
       const line = model.getLineContent(i);
       if (line.match(/^(?:\s*)#[qua]/) || line.match(/^(?:\s*)#check/)) {
@@ -678,20 +678,21 @@ export const registerGeorge: OnMount = (editor, monaco) => {
       }
     }
 
-    // Handle both comma-separated numbers and ranges
+    // Update line references in 'on' statements, handling both individual numbers and ranges
     return content.replace(
       /\bon\s+((?:\d+(?:\s*[,-]\s*\d+)*)|(?:bc|ih))/g,
       (match, numbers) => {
-        // Split by commas first
+        // Split references by commas
         const parts = numbers.split(/\s*,\s*/);
         const updatedParts = parts.map((part: string) => {
-          // Check if it's a range (contains hyphen)
+          // Handle ranges (e.g. "1-3")
           if (part.includes("-")) {
             const [start, end] = part.split(/\s*-\s*/);
             const startNum = parseInt(start);
             const endNum = parseInt(end);
 
             if (!isNaN(startNum) && !isNaN(endNum)) {
+              // Update range bounds if they're >= startNumber
               const newStart =
                 startNum >= startNumber
                   ? increment
@@ -707,20 +708,22 @@ export const registerGeorge: OnMount = (editor, monaco) => {
               return `${newStart}-${newEnd}`;
             }
           } else {
-            // Handle single number
+            // Handle single numbers
             const num = parseInt(part);
             if (!isNaN(num) && num >= startNumber) {
               return increment ? num + 1 : num - 1;
             }
           }
+          // Return unchanged if not a number or below startNumber
           return part;
         });
+
         return `on ${updatedParts.join(", ")}`;
       }
     );
   };
 
-  // Update the enter key handler to collect ALL following numbered lines
+  // Handle keyboard events in the editor
   editor.onKeyDown((e) => {
     const model = editor.getModel();
     if (!model) return;
@@ -728,11 +731,11 @@ export const registerGeorge: OnMount = (editor, monaco) => {
     const position = editor.getPosition();
     if (!position) return;
 
-    // Handle Enter key for incrementing
+    // Handle Enter key press
     if (e.keyCode === monaco.KeyCode.Enter) {
       const lineContent = model.getLineContent(position.lineNumber);
 
-      // Check if cursor is between braces
+      // Handle auto-indentation when cursor is between empty braces {}
       if (
         lineContent.trim().endsWith("{}") &&
         position.column === lineContent.indexOf("}") + 1
@@ -741,7 +744,7 @@ export const registerGeorge: OnMount = (editor, monaco) => {
         const currentIndent = lineContent.match(/^\s*/)?.[0] || "";
         const additionalIndent = "\t"; // Tab for nested indent
 
-        // Insert new line with proper indentation
+        // Insert new line with proper indentation and an extra line after
         const operations = [
           {
             range: new monaco.Range(
@@ -765,13 +768,13 @@ export const registerGeorge: OnMount = (editor, monaco) => {
         return;
       }
 
-      // Check for empty line number
+      // Handle empty line numbers (e.g., "1) ")
       const emptyMatch = lineContent.match(/^\s*(\d+)\)\s*$/);
       if (emptyMatch) {
         e.preventDefault();
         const currentIndent = lineContent.match(/^\s*/)?.[0] || "";
 
-        // Replace the line with just the indentation
+        // Remove the line number, leaving just indentation
         const operations = [
           {
             range: new monaco.Range(
@@ -792,13 +795,14 @@ export const registerGeorge: OnMount = (editor, monaco) => {
         return;
       }
 
+      // Handle numbered lines (e.g., "1) some content")
       const match = lineContent.match(/^\s*(\d+)\)/);
       if (match) {
         e.preventDefault();
         const currentNumber = parseInt(match[1]);
         const currentIndent = lineContent.match(/^\s*/)?.[0] || "";
 
-        // Find section boundaries
+        // Find section boundaries marked by #q, #u, #a, or #check
         let sectionStart = 1;
         let sectionEnd = model.getLineCount();
 
@@ -820,7 +824,7 @@ export const registerGeorge: OnMount = (editor, monaco) => {
           }
         }
 
-        // Get sequential lines within the same section
+        // Find all sequential numbered lines that follow the current line
         const followingLines = [];
         let expectedNumber = currentNumber + 1;
         for (let i = position.lineNumber + 1; i <= sectionEnd; i++) {
@@ -839,7 +843,7 @@ export const registerGeorge: OnMount = (editor, monaco) => {
           }
         }
 
-        // Insert new line with incremented number
+        // Insert new line with incremented number and update following lines
         const newNumber = currentNumber + 1;
         const newLine = `${currentIndent}${newNumber}) `;
 
@@ -853,6 +857,7 @@ export const registerGeorge: OnMount = (editor, monaco) => {
             ),
             text: "\n" + newLine,
           },
+          // Update line numbers and references in all following lines
           ...followingLines.map((line) => {
             const updatedContent = updateReferences(
               model,
@@ -885,12 +890,13 @@ export const registerGeorge: OnMount = (editor, monaco) => {
     }
   });
 
-  // Add hover provider before theme definition
+  // Register hover provider for rule definitions
   monaco.languages.registerHoverProvider("george", {
     provideHover: (model, position) => {
       const wordInfo = model.getWordAtPosition(position);
       if (!wordInfo) return null;
 
+      // Check if word is a defined rule and show its definition
       const ruleDef = ruleDefinitions[wordInfo.word];
       if (ruleDef) {
         return {
