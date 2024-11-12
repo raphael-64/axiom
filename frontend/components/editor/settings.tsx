@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { InviteWithWorkspace } from "@/lib/types";
 import { RotateCw } from "lucide-react";
 import { TooltipButton } from "../tooltip-button";
+import { useTheme } from "next-themes";
 
 type Category = "editor" | "shortcuts" | "invites";
 
@@ -65,6 +66,7 @@ export default function SettingsModal({
     isLoading: invitesLoading,
   } = useUserInvites(userId);
   const respondToInvite = useRespondToInvite();
+  const { theme, setTheme } = useTheme();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -108,7 +110,10 @@ export default function SettingsModal({
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center justify-between">
                     <label>Theme</label>
-                    <Select defaultValue="dark">
+                    <Select
+                      value={theme}
+                      onValueChange={(value) => setTheme(value)}
+                    >
                       <SelectTrigger className="w-[120px]">
                         <SelectValue />
                       </SelectTrigger>
