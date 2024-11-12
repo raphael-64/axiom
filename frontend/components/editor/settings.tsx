@@ -304,7 +304,9 @@ export default function SettingsModal({
                                         >
                                             <div>{item.token}</div>
                                             <ColorPicker
-                                                color={"#" + item.foreground}
+                                                defaultColor={
+                                                    "#" + item.foreground
+                                                }
                                             />
                                         </div>
                                     ))}
