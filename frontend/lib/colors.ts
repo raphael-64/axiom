@@ -34,6 +34,10 @@ export const lightTheme: editor.IStandaloneThemeData = {
     },
 };
 
+// export const darkColors = darkTheme.rules;
+// export const lightColors = lightTheme.rules;
+// console.log(darkColors.map((rule) => rule.token));
+
 export const getRandomColor = () => {
     const colors = [
         "#3B82F6", // blue-500
