@@ -10,7 +10,7 @@ export const darkTheme: editor.IStandaloneThemeData = {
         { token: "constant.language", foreground: "D99FF1" },
         { token: "constant.numeric", foreground: "aeaeeb" }, // "(", "=>"
         { token: "string", foreground: "9AEFEA" }, // "true false"
-        { token: "variable.language", foreground: "85B1E0" }, // line & rule numbers: "15), "on 12-20"
+        { token: "variable.language", foreground: "9dcafa" }, // line & rule numbers: "15), "on 12-20"
     ],
     colors: {
         "editor.background": "#0A0A0A",
