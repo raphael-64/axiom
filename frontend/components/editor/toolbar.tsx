@@ -1,4 +1,4 @@
-import { TooltipButton } from "@/components/tooltip-button";
+import { TooltipButton } from "@/components/ui/tooltip-button";
 import { PanelBottom, PanelLeft, Settings } from "lucide-react";
 
 interface ToolbarProps {

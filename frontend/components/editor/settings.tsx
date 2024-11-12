@@ -21,7 +21,7 @@ import { useUserInvites, useRespondToInvite, useWorkspaces } from "@/lib/query";
 import { toast } from "sonner";
 import { InviteWithWorkspace } from "@/lib/types";
 import { RotateCw } from "lucide-react";
-import { TooltipButton } from "../tooltip-button";
+import { TooltipButton } from "@/components/ui/tooltip-button";
 import { useTheme } from "next-themes";
 
 type Category = "editor" | "shortcuts" | "invites";

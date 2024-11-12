@@ -5,19 +5,31 @@ import type { editor, Range } from "monaco-editor";
 import type { Socket } from "socket.io-client";
 import { getRandomColor } from "./colors";
 
+// Core interfaces for managing collaboration state
 export interface CollaborationState {
-  binding: MonacoBinding | null;
-  workspaceDocs: Map<string, Y.Doc>;
+  binding: MonacoBinding | null; // Connects Monaco editor to Yjs document
+  workspaceDocs: Map<string, Y.Doc>; // Maps file paths to their Yjs documents
 }
 
+// Interface defining cursor position and selection data
 export interface CursorData {
   position: {
     lineNumber: number;
     column: number;
   };
-  selection?: Range;
+  selection?: Range; // Optional selection range in the editor
 }
 
+/**
+ * Sets up real-time collaboration for a specific file in the workspace
+ * @param socket - Socket.io connection for real-time communication
+ * @param path - File path being collaborated on
+ * @param workspaceId - Unique identifier for the workspace
+ * @param editor - Monaco editor instance
+ * @param model - Text model containing file content
+ * @param userId - Current user's identifier
+ * @param decorationsCollection - Manages editor decorations (e.g., cursors)
+ */
 export const setupCollaboration = async ({
   socket,
   path,
@@ -35,14 +47,16 @@ export const setupCollaboration = async ({
   userId: string;
   decorationsCollection: editor.IEditorDecorationsCollection;
 }) => {
-  // Join room with specific file path
+  // Join collaboration room for this specific file
   socket.emit("joinRoom", { workspaceId, path });
 
-  // Initialize doc
+  // Initialize Yjs document and text type
   const doc = new Y.Doc();
   const ytext = doc.getText("content");
 
-  // Request initial content and wait for both sync and content
+  // Synchronize initial state by:
+  // 1. Getting existing document updates
+  // 2. Fetching current file content
   const [syncData, fileContent] = await Promise.all([
     new Promise<string>((resolve) => {
       socket.once("sync", (update) => resolve(update));
@@ -53,19 +67,21 @@ export const setupCollaboration = async ({
     }),
   ]);
 
-  // Apply initial state
+  // Apply synchronized state to the document
   Y.applyUpdate(doc, Buffer.from(syncData, "base64"));
 
-  // Double check content matches
+  // Ensure document content matches server content
   const currentContent = ytext.toString();
   if (currentContent !== fileContent) {
     ytext.delete(0, ytext.length);
     ytext.insert(0, fileContent);
   }
 
+  // Set up awareness protocol for cursor positions and user presence
   const awareness = new awarenessProtocol.Awareness(doc);
   const clientId = socket.id;
 
+  // Initialize local user state with random cursor color
   awareness.setLocalState({
     user: {
       id: clientId,
@@ -75,14 +91,15 @@ export const setupCollaboration = async ({
     },
   });
 
-  // Update binding with awareness
+  // Bind Monaco editor to Yjs document with awareness
   const binding = new MonacoBinding(ytext, model, new Set([editor]), awareness);
 
-  // Handle updates
+  // Handle incoming document updates from other users
   socket.on(`doc-update-${path}`, (update: string) => {
     Y.applyUpdate(doc, Buffer.from(update, "base64"));
   });
 
+  // Broadcast local document changes to other users
   doc.on("update", (update: Uint8Array) => {
     socket.emit("doc-update", {
       workspaceId,
@@ -91,6 +108,7 @@ export const setupCollaboration = async ({
     });
   });
 
+  // Broadcast awareness changes (cursor position, selection) to other users
   awareness.on("change", () => {
     const localState = awareness.getLocalState();
     if (localState) {
@@ -103,7 +121,7 @@ export const setupCollaboration = async ({
     }
   });
 
-  // Add cursor position tracking
+  // Update cursor position in awareness when local user moves cursor
   editor.onDidChangeCursorPosition((e) => {
     if (awareness.getLocalState()) {
       awareness.setLocalStateField("user", {
@@ -123,6 +141,14 @@ export const setupCollaboration = async ({
   };
 };
 
+/**
+ * Cleans up collaboration resources when disconnecting
+ * - Disconnects socket
+ * - Destroys Yjs documents
+ * - Removes Monaco binding
+ * - Clears cursor decorations
+ * - Removes user style elements
+ */
 export const cleanupCollaboration = ({
   socket,
   workspaceDocs,

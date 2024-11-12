@@ -1,6 +1,6 @@
 import { FilesResponse, Workspace } from "@/lib/types";
 import { useMemo, useState, useEffect } from "react";
-import { TooltipButton } from "@/components/tooltip-button";
+import { TooltipButton } from "@/components/ui/tooltip-button";
 import {
   Download,
   MoreHorizontal,
