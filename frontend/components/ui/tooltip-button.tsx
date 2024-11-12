@@ -6,7 +6,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-import { Button, ButtonProps, buttonVariants } from "./ui/button";
+import { Button, ButtonProps, buttonVariants } from "./button";
 import { cn } from "@/lib/utils";
 
 const TooltipButton = ({
