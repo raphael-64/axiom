@@ -40,6 +40,7 @@ import { Socket, io } from "socket.io-client";
 
 // Update the import to include useFiles
 import { useFiles } from "@/lib/query";
+import { useTheme } from "next-themes";
 
 const sizes = {
   min: 140,
@@ -54,7 +55,7 @@ export default function EditorLayout({
   userId: string;
 }) {
   const { width } = useWindowSize();
-
+  const { theme } = useTheme();
   const { data: filesData } = useFiles(files);
 
   const explorerRef = useRef<ImperativePanelHandle>(null);
@@ -578,6 +579,46 @@ export default function EditorLayout({
     },
     [editorRef]
   );
+
+  useEffect(() => {
+    if (!monacoInstance) return;
+
+    monacoInstance.editor.defineTheme("dark", {
+      base: "vs-dark",
+      inherit: true,
+      rules: [
+        { token: "comment", foreground: "666666" },
+        { token: "constant.other", foreground: "569CD6" }, // "#check x"
+        { token: "keyword", foreground: "aeaeeb" }, // "forall", "exists", "by"
+        { token: "constant.language", foreground: "D99FF1" },
+        { token: "constant.numeric", foreground: "aeaeeb" }, // "(", "=>"
+        { token: "string", foreground: "9AEFEA" }, // "true false"
+        { token: "variable.language", foreground: "85B1E0" }, // line & rule numbers: "15), "on 12-20"
+      ],
+      colors: {
+        "editor.background": "#0A0A0A",
+      },
+    });
+
+    monacoInstance.editor.defineTheme("light", {
+      base: "vs",
+      inherit: true,
+      rules: [
+        { token: "comment", foreground: "999999" },
+        { token: "constant.other", foreground: "3372a6" }, // "#check x"
+        { token: "keyword", foreground: "7e5ec4" }, // "forall", "exists", "by"
+        { token: "constant.language", foreground: "c36be8" },
+        { token: "constant.numeric", foreground: "7e5ec4" }, // "(", "=>"
+        { token: "string", foreground: "4ec280" }, // "true" 'false'
+        { token: "variable.language", foreground: "3678bf" }, // line & rule numbers: "15), "on 12-20"
+      ],
+      colors: {
+        "editor.background": "#FFFFFF",
+      },
+    });
+
+    monacoInstance.editor.setTheme(theme === "dark" ? "dark" : "light");
+  }, [monacoInstance, theme]);
 
   if (!width) return null;
 
