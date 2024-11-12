@@ -25,7 +25,8 @@ export async function getFiles() {
 WORKSPACE ACTIONS
 */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 export async function getWorkspaces(userId: string) {
   const response = await fetch(
