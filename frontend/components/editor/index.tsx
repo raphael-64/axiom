@@ -141,33 +141,40 @@ export default function EditorLayout({
     }
   };
 
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.metaKey && e.key === "g") {
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // Modern way to detect platform using userAgentData
+    const isMac = 'userAgentData' in navigator
+      ? (navigator.userAgentData as any)?.platform?.toLowerCase().includes('mac')
+      : /Mac|iPhone|iPod|iPad/.test(navigator.userAgent);
+
+    const cmdOrCtrl = isMac ? e.metaKey : e.ctrlKey;
+
+    if (cmdOrCtrl && e.key.toLowerCase() === 'g') {
       e.preventDefault();
       handleAskGeorge();
     }
-    if (e.metaKey && e.key === "b") {
+    if (cmdOrCtrl && e.key === "b") {
       e.preventDefault();
       toggleExplorer();
     }
-    if (e.metaKey && e.key === "j") {
+    if (cmdOrCtrl && e.key === "j") {
       e.preventDefault();
       toggleOutput();
     }
-    if (e.metaKey && e.key === "k") {
+    if (cmdOrCtrl && e.key === "k") {
       e.preventDefault();
       setIsSettingsOpen(true);
     }
-    if (e.metaKey && e.key === "u") {
+    if (cmdOrCtrl && e.key === "u") {
       e.preventDefault();
       setIsUploadOpen(true);
     }
-  };
+  }, [handleAskGeorge, toggleExplorer, toggleOutput, setIsSettingsOpen, setIsUploadOpen]);
 
   useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
+  }, [handleKeyDown]);
 
   // Initialize socket connection
   useEffect(() => {
@@ -457,12 +464,29 @@ export default function EditorLayout({
   };
 
   const handleEditorWillMount: BeforeMount = (monaco) => {
-    // monaco.editor.addKeybindingRules([
-    //   {
-    //     keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyG,
-    //     command: "null",
-    //   },
-    // ]);
+    // Remove all keybindings we want to handle globally
+    monaco.editor.addKeybindingRules([
+      {
+        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyG,
+        command: null
+      },
+      {
+        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyB,
+        command: null
+      },
+      {
+        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyJ,
+        command: null
+      },
+      {
+        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK,
+        command: null
+      },
+      {
+        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyU,
+        command: null
+      }
+    ]);
   };
 
   const handleEditorMount: OnMount = (
@@ -476,14 +500,6 @@ export default function EditorLayout({
 
     registerGeorge(editor, monaco);
     monaco.editor.setModelLanguage(editor.getModel()!, "george");
-
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, () => {
-      setIsSettingsOpen(true);
-    });
-
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyG, () => {
-      handleAskGeorge();
-    });
 
     const decorationsCollection = editor.createDecorationsCollection();
     setDecorationsCollection(decorationsCollection);
