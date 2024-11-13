@@ -586,7 +586,7 @@ export default function EditorLayout({
                 collapsible
                 defaultSize={0}
                 maxSize={80}
-                minSize={40}
+                minSize={20}
               >
                 <div
                   className={`p-4 h-full overflow-auto whitespace-pre-wrap font-mono text-sm ${
