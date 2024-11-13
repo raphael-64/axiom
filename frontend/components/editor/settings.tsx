@@ -116,7 +116,8 @@ export default function SettingsModal({
                     >
                       <SelectTrigger className="w-[120px]">
                         <SelectValue>
-                          {theme && theme.charAt(0).toUpperCase() + theme.slice(1)}
+                          {theme &&
+                            theme.charAt(0).toUpperCase() + theme.slice(1)}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
@@ -130,7 +131,7 @@ export default function SettingsModal({
                     <div className="flex items-center gap-2">
                       <label>Auto Complete</label>
                       <TooltipProvider>
-                        <Tooltip>
+                        <Tooltip delayDuration={0}>
                           <TooltipTrigger>
                             <HelpCircle className="size-3 text-muted-foreground" />
                           </TooltipTrigger>
