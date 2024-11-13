@@ -22,8 +22,7 @@
     "yjs": "^13.6.20"
   },
   "prisma": {
-    "schema": "prisma/schema.prisma",
-    "seed": "ts-node seed.ts"
+    "schema": "prisma/schema.prisma"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
