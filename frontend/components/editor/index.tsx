@@ -141,35 +141,47 @@ export default function EditorLayout({
     }
   };
 
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    // Modern way to detect platform using userAgentData
-    const isMac = 'userAgentData' in navigator
-      ? (navigator.userAgentData as any)?.platform?.toLowerCase().includes('mac')
-      : /Mac|iPhone|iPod|iPad/.test(navigator.userAgent);
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      // Modern way to detect platform using userAgentData
+      const isMac =
+        "userAgentData" in navigator
+          ? (navigator.userAgentData as any)?.platform
+              ?.toLowerCase()
+              .includes("mac")
+          : /Mac|iPhone|iPod|iPad/.test(navigator.userAgent);
 
-    const cmdOrCtrl = isMac ? e.metaKey : e.ctrlKey;
+      const cmdOrCtrl = isMac ? e.metaKey : e.ctrlKey;
 
-    if (cmdOrCtrl && e.key.toLowerCase() === 'g') {
-      e.preventDefault();
-      handleAskGeorge();
-    }
-    if (cmdOrCtrl && e.key === "b") {
-      e.preventDefault();
-      toggleExplorer();
-    }
-    if (cmdOrCtrl && e.key === "j") {
-      e.preventDefault();
-      toggleOutput();
-    }
-    if (cmdOrCtrl && e.key === "k") {
-      e.preventDefault();
-      setIsSettingsOpen(true);
-    }
-    if (cmdOrCtrl && e.key === "u") {
-      e.preventDefault();
-      setIsUploadOpen(true);
-    }
-  }, [handleAskGeorge, toggleExplorer, toggleOutput, setIsSettingsOpen, setIsUploadOpen]);
+      if (cmdOrCtrl && e.key.toLowerCase() === "g") {
+        e.preventDefault();
+        handleAskGeorge();
+      }
+      if (cmdOrCtrl && e.key === "b") {
+        e.preventDefault();
+        toggleExplorer();
+      }
+      if (cmdOrCtrl && e.key === "j") {
+        e.preventDefault();
+        toggleOutput();
+      }
+      if (cmdOrCtrl && e.key === "k") {
+        e.preventDefault();
+        setIsSettingsOpen(true);
+      }
+      if (cmdOrCtrl && e.key === "u") {
+        e.preventDefault();
+        setIsUploadOpen(true);
+      }
+    },
+    [
+      handleAskGeorge,
+      toggleExplorer,
+      toggleOutput,
+      setIsSettingsOpen,
+      setIsUploadOpen,
+    ]
+  );
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown, true);
@@ -329,7 +341,7 @@ export default function EditorLayout({
     }
   };
 
-  const handleFileClick = (
+  const handleFileClick = async (
     path: string,
     name: string,
     workspaceId?: string
@@ -352,9 +364,19 @@ export default function EditorLayout({
     if (existingIndex >= 0) {
       setActiveTabIndex(existingIndex);
     } else {
-      if (workspaceId) setActiveWorkspaceId(workspaceId);
-      setOpenTabs([...openTabs, { path, name, workspaceId }]);
-      setActiveTabIndex(openTabs.length);
+      if (workspaceId) {
+        setActiveWorkspaceId(workspaceId);
+        // Add the tab first
+        setOpenTabs((prev) => [...prev, { path, name, workspaceId }]);
+        setActiveTabIndex(openTabs.length);
+        // Immediately handle the editor content
+        if (editorRef && monacoInstance) {
+          await handleEditorContent(path, workspaceId);
+        }
+      } else {
+        setOpenTabs((prev) => [...prev, { path, name }]);
+        setActiveTabIndex(openTabs.length);
+      }
     }
   };
 
@@ -468,24 +490,24 @@ export default function EditorLayout({
     monaco.editor.addKeybindingRules([
       {
         keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyG,
-        command: null
+        command: null,
       },
       {
         keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyB,
-        command: null
+        command: null,
       },
       {
         keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyJ,
-        command: null
+        command: null,
       },
       {
         keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK,
-        command: null
+        command: null,
       },
       {
         keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyU,
-        command: null
-      }
+        command: null,
+      },
     ]);
   };
 
