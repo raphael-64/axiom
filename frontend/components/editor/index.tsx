@@ -103,6 +103,8 @@ export default function EditorLayout({
     return saved !== null ? saved === "true" : true;
   });
 
+  const [currentFilePath, setCurrentFilePath] = useState<string>();
+
   const toggleExplorer = () => {
     const panel = explorerRef.current;
     if (panel) {
@@ -212,6 +214,9 @@ export default function EditorLayout({
   const handleEditorContent = async (path: string, workspaceId?: string) => {
     if (!editorRef || !monacoInstance) return;
 
+    // Set current file path
+    setCurrentFilePath(path);
+
     // Cleanup previous
     monacoBinding?.destroy();
 
@@ -244,70 +249,94 @@ export default function EditorLayout({
         socket?.on(
           "awareness-update",
           ({ path: updatePath, clientId: updateClientId, state }) => {
-            if (
-              updatePath === path &&
-              updateClientId !== socket.id &&
-              state?.user &&
-              decorationsCollection
-            ) {
-              awareness.getStates().set(updateClientId, state);
+            console.log("Received awareness update:", {
+              path: updatePath,
+              clientId: updateClientId,
+              state,
+            });
 
-              // Update cursor decorations
-              if (state.user?.cursor) {
-                const { position, selection } = state.user.cursor;
-                const decorations: monaco.editor.IModelDeltaDecoration[] = [];
+            if (decorationsCollection) {
+              // Only process awareness if paths match and it's a different user
+              if (
+                updatePath === currentFilePath && // Compare with current file path
+                updatePath === path &&
+                updateClientId !== socket.id &&
+                state?.user
+              ) {
+                awareness.getStates().set(updateClientId, state);
 
-                // Add cursor line
-                decorations.push({
-                  range: new monacoInstance.Range(
-                    position.lineNumber,
-                    position.column,
-                    position.lineNumber,
-                    position.column + 1
-                  ),
-                  options: {
-                    className: `cursor-${updateClientId}`,
-                    beforeContentClassName: `cursor-${updateClientId}-line`,
-                    hoverMessage: {
-                      value: `**${state.user.name}**`,
-                      isTrusted: true,
-                      supportThemeIcons: true,
-                    },
-                  },
-                });
+                // Clear previous decorations for this user
+                const styleEl = document.getElementById(
+                  `user-${updateClientId}-style`
+                );
+                if (styleEl) {
+                  styleEl.remove();
+                }
 
-                // Add selection if exists
-                if (selection) {
+                // Update cursor decorations
+                if (state.user?.cursor) {
+                  const { position, selection } = state.user.cursor;
+                  const decorations: monaco.editor.IModelDeltaDecoration[] = [];
+
+                  // Add cursor line
                   decorations.push({
                     range: new monacoInstance.Range(
-                      selection.startLineNumber,
-                      selection.startColumn,
-                      selection.endLineNumber,
-                      selection.endColumn
+                      position.lineNumber,
+                      position.column,
+                      position.lineNumber,
+                      position.column + 1
                     ),
                     options: {
-                      className: `selection-${updateClientId}`,
+                      className: `cursor-${updateClientId}`,
+                      beforeContentClassName: `cursor-${updateClientId}-line`,
+                      hoverMessage: {
+                        value: `**${state.user.name}**`,
+                        isTrusted: true,
+                        supportThemeIcons: true,
+                      },
                     },
                   });
+
+                  // Add selection if exists
+                  if (selection) {
+                    decorations.push({
+                      range: new monacoInstance.Range(
+                        selection.startLineNumber,
+                        selection.startColumn,
+                        selection.endLineNumber,
+                        selection.endColumn
+                      ),
+                      options: {
+                        className: `selection-${updateClientId}`,
+                      },
+                    });
+                  }
+
+                  // Update styles
+                  const styleId = `user-${updateClientId}-style`;
+                  let styleEl = document.getElementById(styleId);
+                  if (!styleEl) {
+                    styleEl = document.createElement("style");
+                    styleEl.id = styleId;
+                    document.head.appendChild(styleEl);
+                  }
+
+                  styleEl.textContent = createUserDecorationStyles(
+                    updateClientId,
+                    state.user.color
+                  );
+
+                  // Clear previous decorations and set new ones
+                  decorationsCollection.clear();
+                  decorationsCollection.set(decorations);
                 }
-
-                // Update styles
-                const styleId = `user-${updateClientId}-style`;
-                let styleEl = document.getElementById(styleId);
-                if (!styleEl) {
-                  styleEl = document.createElement("style");
-                  styleEl.id = styleId;
-                  document.head.appendChild(styleEl);
-                }
-
-                styleEl.textContent = createUserDecorationStyles(
-                  updateClientId,
-                  state.user.color
-                );
-
-                // Clear previous decorations and set new ones
+              } else {
+                // Remove decorations if user switched to different file
                 decorationsCollection.clear();
-                decorationsCollection.set(decorations);
+                const styleEl = document.getElementById(
+                  `user-${updateClientId}-style`
+                );
+                styleEl?.remove();
               }
             }
           }
