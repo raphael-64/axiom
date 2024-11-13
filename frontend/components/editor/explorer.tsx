@@ -310,8 +310,8 @@ function FolderItem({
             workspace ? "group/workspace" : ""
           }`}
         >
-          <ChevronRight 
-            className={`w-4 h-4 transition-transform ${
+          <ChevronRight
+            className={`size-3.5 transition-transform ${
               isOpen ? "rotate-90" : ""
             }`}
           />
@@ -345,8 +345,8 @@ function FolderItem({
               workspace ? "group/workspace" : ""
             } ${isDropdownOpen || isContextMenuOpen ? "bg-muted" : ""}`}
           >
-            <ChevronRight 
-              className={`w-4 h-4 transition-transform ${
+            <ChevronRight
+              className={`size-3.5 transition-transform ${
                 isOpen ? "rotate-90" : ""
               }`}
             />
