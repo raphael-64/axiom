@@ -439,13 +439,15 @@ export default function EditorLayout({
     [editorRef]
   );
 
+  const { resolvedTheme } = useTheme();
+
   useEffect(() => {
     if (!monacoInstance) return;
 
     monacoInstance.editor.defineTheme("dark", darkTheme);
     monacoInstance.editor.defineTheme("light", lightTheme);
-    monacoInstance.editor.setTheme(theme === "dark" ? "dark" : "light");
-  }, [monacoInstance, theme]);
+    monacoInstance.editor.setTheme(resolvedTheme === "dark" ? "dark" : "light");
+  }, [monacoInstance, resolvedTheme]);
 
   if (!width) return null;
 
