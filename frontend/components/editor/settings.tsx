@@ -66,7 +66,7 @@ export default function SettingsModal({
     isLoading: invitesLoading,
   } = useUserInvites(userId);
   const respondToInvite = useRespondToInvite();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -115,7 +115,9 @@ export default function SettingsModal({
                       onValueChange={(value) => setTheme(value)}
                     >
                       <SelectTrigger className="w-[120px]">
-                        <SelectValue />
+                        <SelectValue>
+                          {theme && theme.charAt(0).toUpperCase() + theme.slice(1)}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="light">Light</SelectItem>
