@@ -23,8 +23,10 @@ import { RotateCw } from "lucide-react";
 import { TooltipButton } from "@/components/ui/tooltip-button";
 import { useTheme } from "next-themes";
 
-import { darkTheme, lightTheme } from "@/lib/colors";
+// import { darkTheme, lightTheme } from "@/lib/colors";
 import ColorPicker from "./colorPicker";
+
+import { useColorTheme } from "@/components/providers/color-context";
 
 type Category = "editor" | "shortcuts" | "invites" | "colours";
 
@@ -71,7 +73,11 @@ export default function SettingsModal({
     const respondToInvite = useRespondToInvite();
     const { theme, setTheme } = useTheme();
 
-    const curTheme = theme === "dark" ? darkTheme : lightTheme;
+    const colorTheme = useColorTheme();
+    const darkThemeColors = colorTheme?.darkTheme.rules;
+    const lightThemeColors = colorTheme?.lightTheme.rules;
+
+    const themeColors = theme === "dark" ? darkThemeColors : lightThemeColors;
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -297,13 +303,14 @@ export default function SettingsModal({
                                 </div>
                             ) : activeCategory === "colours" ? (
                                 <div className="space-y-2 text-sm">
-                                    {curTheme.rules.map((item) => (
+                                    {themeColors?.map((item, index) => (
                                         <div
-                                            key={item.token}
+                                            key={index}
                                             className="flex items-center justify-between"
                                         >
                                             <div>{item.token}</div>
                                             <ColorPicker
+                                                token={item.token}
                                                 defaultColor={
                                                     "#" + item.foreground
                                                 }

@@ -1,34 +1,38 @@
 import type { editor } from "monaco-editor";
 
-export const darkTheme: editor.IStandaloneThemeData = {
+export const darkThemeRules = [
+    { token: "comment", foreground: "666666" },
+    { token: "constant.other", foreground: "569CD6" }, // "#check x"
+    { token: "keyword", foreground: "aeaeeb" }, // "forall", "exists", "by"
+    { token: "constant.language", foreground: "D99FF1" },
+    { token: "constant.numeric", foreground: "aeaeeb" }, // "(", "=>"
+    { token: "string", foreground: "9AEFEA" }, // "true false"
+    { token: "variable.language", foreground: "9dcafa" }, // line & rule numbers: "15), "on 12-20"
+];
+
+export const darkThemeOld: editor.IStandaloneThemeData = {
     base: "vs-dark",
     inherit: true,
-    rules: [
-        { token: "comment", foreground: "666666" },
-        { token: "constant.other", foreground: "569CD6" }, // "#check x"
-        { token: "keyword", foreground: "aeaeeb" }, // "forall", "exists", "by"
-        { token: "constant.language", foreground: "D99FF1" },
-        { token: "constant.numeric", foreground: "aeaeeb" }, // "(", "=>"
-        { token: "string", foreground: "9AEFEA" }, // "true false"
-        { token: "variable.language", foreground: "9dcafa" }, // line & rule numbers: "15), "on 12-20"
-    ],
+    rules: darkThemeRules,
     colors: {
         "editor.background": "#0A0A0A",
     },
 };
 
-export const lightTheme: editor.IStandaloneThemeData = {
+export const lightThemeRules = [
+    { token: "comment", foreground: "999999" },
+    { token: "constant.other", foreground: "267abf" }, // "#check x"
+    { token: "keyword", foreground: "6f3fd9" }, // "forall", "exists", "by"
+    { token: "constant.language", foreground: "b050d9" }, // rules
+    { token: "constant.numeric", foreground: "6f3fd9" }, // "(", "=>"
+    { token: "string", foreground: "04b07c" }, // "true" 'false'
+    { token: "variable.language", foreground: "0263cc" }, // line & rule numbers: "15), "on 12-20"
+];
+
+export const lightThemeOld: editor.IStandaloneThemeData = {
     base: "vs",
     inherit: true,
-    rules: [
-        { token: "comment", foreground: "999999" },
-        { token: "constant.other", foreground: "267abf" }, // "#check x"
-        { token: "keyword", foreground: "6f3fd9" }, // "forall", "exists", "by"
-        { token: "constant.language", foreground: "b050d9" }, // rules
-        { token: "constant.numeric", foreground: "6f3fd9" }, // "(", "=>"
-        { token: "string", foreground: "04b07c" }, // "true" 'false'
-        { token: "variable.language", foreground: "0263cc" }, // line & rule numbers: "15), "on 12-20"
-    ],
+    rules: lightThemeRules,
     colors: {
         "editor.background": "#FFFFFF",
     },

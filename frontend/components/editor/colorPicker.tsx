@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ChromePicker } from "react-color";
+import { useColorTheme } from "@/components/providers/color-context";
 
 import {
     Popover,
@@ -8,14 +9,20 @@ import {
 } from "@/components/ui/popover";
 
 export default function ColorPicker({
+    token,
     defaultColor,
 }: {
+    token: string;
     defaultColor: string;
 }) {
-    const [color, setColor] = useState<string>(defaultColor);
+    const colorTheme = useColorTheme();
+    const updateColor = colorTheme ? colorTheme.updateColor : () => {};
+    const [color, setColor] = useState(defaultColor);
 
     const handleChange = (color: any) => {
+        console.log("changing");
         setColor(color.hex);
+        updateColor(token, color.hex); // Update the correct theme (dark or light)
     };
 
     return (
