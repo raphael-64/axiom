@@ -82,6 +82,16 @@ export default function SettingsModal({
         theme === "dark" ? darkThemeColors : lightThemeColors
     );
 
+    const colorNames = [
+        "Comments",
+        "George Commands",
+        "Keywords",
+        "Rules",
+        "Operators",
+        "Literals",
+        "Line Numbers",
+    ];
+
     useEffect(() => {
         setThemeColors(theme === "dark" ? darkThemeColors : lightThemeColors);
     }, [colorTheme]);
@@ -328,7 +338,7 @@ export default function SettingsModal({
                                                 key={index}
                                                 className="flex items-center justify-between"
                                             >
-                                                <div>{item.token}</div>
+                                                <div>{colorNames[index]}</div>
                                                 <ColorPicker
                                                     token={item.token}
                                                     defaultColor={
