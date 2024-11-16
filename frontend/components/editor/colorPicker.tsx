@@ -20,7 +20,6 @@ export default function ColorPicker({
     const [color, setColor] = useState(defaultColor);
 
     const handleChange = (color: any) => {
-        console.log("changing");
         setColor(color.hex);
         updateColor(token, color.hex); // Update the correct theme (dark or light)
     };
@@ -32,7 +31,7 @@ export default function ColorPicker({
                     className="w-12 h-6 rounded-md"
                     style={{ backgroundColor: color }}
                 ></PopoverTrigger>
-                <PopoverContent className="w-fit p-0">
+                <PopoverContent className="w-fit p-1" side="right">
                     <ChromePicker
                         color={color}
                         onChange={handleChange}

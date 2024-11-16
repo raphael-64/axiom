@@ -27,6 +27,7 @@ import { useTheme } from "next-themes";
 import ColorPicker from "./colorPicker";
 
 import { useColorTheme } from "@/components/providers/color-context";
+import ColorPreview from "./colorPreview";
 
 type Category = "editor" | "shortcuts" | "invites" | "colours";
 
@@ -302,22 +303,25 @@ export default function SettingsModal({
                                     )}
                                 </div>
                             ) : activeCategory === "colours" ? (
-                                <div className="space-y-2 text-sm">
-                                    {themeColors?.map((item, index) => (
-                                        <div
-                                            key={index}
-                                            className="flex items-center justify-between"
-                                        >
-                                            <div>{item.token}</div>
-                                            <ColorPicker
-                                                token={item.token}
-                                                defaultColor={
-                                                    "#" + item.foreground
-                                                }
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
+                                <>
+                                    <div className="space-y-2 text-sm">
+                                        {themeColors?.map((item, index) => (
+                                            <div
+                                                key={index}
+                                                className="flex items-center justify-between"
+                                            >
+                                                <div>{item.token}</div>
+                                                <ColorPicker
+                                                    token={item.token}
+                                                    defaultColor={
+                                                        "#" + item.foreground
+                                                    }
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <ColorPreview />
+                                </>
                             ) : null}
                         </div>
                     </div>
