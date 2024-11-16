@@ -11,6 +11,7 @@ import { ReactNode } from "react";
 
 interface ColorThemeContextType {
     updateColor: (token: string, colorHex: string) => void;
+    resetToDefault: () => void;
     darkTheme: editor.IStandaloneThemeData;
     lightTheme: editor.IStandaloneThemeData;
 }
@@ -116,6 +117,44 @@ export const ColorThemeProvider = ({ children }: ColorThemeProviderProps) => {
         }
     };
 
+    const resetToDefault = () => {
+        if (theme === "dark") {
+            const defaultDarkTheme = {
+                rules: [
+                    { token: "comment", foreground: "666666" },
+                    { token: "constant.other", foreground: "569CD6" },
+                    { token: "keyword", foreground: "aeaeeb" },
+                    { token: "constant.language", foreground: "D99FF1" },
+                    { token: "constant.numeric", foreground: "aeaeeb" },
+                    { token: "string", foreground: "9AEFEA" },
+                    { token: "variable.language", foreground: "9dcafa" },
+                ],
+            };
+            setDarkThemeColors(defaultDarkTheme);
+            localStorage.setItem(
+                "darkThemeColors",
+                JSON.stringify(defaultDarkTheme)
+            );
+        } else {
+            const defaultLightTheme = {
+                rules: [
+                    { token: "comment", foreground: "999999" },
+                    { token: "constant.other", foreground: "267abf" },
+                    { token: "keyword", foreground: "6f3fd9" },
+                    { token: "constant.language", foreground: "b050d9" },
+                    { token: "constant.numeric", foreground: "6f3fd9" },
+                    { token: "string", foreground: "04b07c" },
+                    { token: "variable.language", foreground: "0263cc" },
+                ],
+            };
+            setLightThemeColors(defaultLightTheme);
+            localStorage.setItem(
+                "lightThemeColors",
+                JSON.stringify(defaultLightTheme)
+            );
+        }
+    };
+
     // Update the Monaco theme whenever the colors change
     useEffect(() => {
         monaco.editor.defineTheme("dark", darkTheme);
@@ -124,7 +163,7 @@ export const ColorThemeProvider = ({ children }: ColorThemeProviderProps) => {
 
     return (
         <ColorThemeContext.Provider
-            value={{ updateColor, darkTheme, lightTheme }}
+            value={{ updateColor, resetToDefault, darkTheme, lightTheme }}
         >
             {children}
         </ColorThemeContext.Provider>

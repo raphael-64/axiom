@@ -78,7 +78,13 @@ export default function SettingsModal({
     const darkThemeColors = colorTheme?.darkTheme.rules;
     const lightThemeColors = colorTheme?.lightTheme.rules;
 
-    const themeColors = theme === "dark" ? darkThemeColors : lightThemeColors;
+    const [themeColors, setThemeColors] = useState(
+        theme === "dark" ? darkThemeColors : lightThemeColors
+    );
+
+    useEffect(() => {
+        setThemeColors(theme === "dark" ? darkThemeColors : lightThemeColors);
+    }, [colorTheme]);
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -123,6 +129,18 @@ export default function SettingsModal({
                                     variant="ghost"
                                     size="xsIcon"
                                     onClick={() => refetchInvites()}
+                                >
+                                    <RotateCw className="!size-3.5" />
+                                </TooltipButton>
+                            )}
+                            {activeCategory === "colours" && (
+                                <TooltipButton
+                                    tooltip="Default Colours"
+                                    variant="ghost"
+                                    size="xsIcon"
+                                    onClick={() => {
+                                        colorTheme?.resetToDefault();
+                                    }}
                                 >
                                     <RotateCw className="!size-3.5" />
                                 </TooltipButton>

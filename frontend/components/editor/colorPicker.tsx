@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ChromePicker } from "react-color";
 import { useColorTheme } from "@/components/providers/color-context";
 
@@ -19,6 +19,10 @@ export default function ColorPicker({
     const updateColor = colorTheme ? colorTheme.updateColor : () => {};
     const [color, setColor] = useState(defaultColor);
 
+    useEffect(() => {
+        setColor(defaultColor);
+    }, [defaultColor]);
+
     const handleChange = (color: any) => {
         setColor(color.hex);
         updateColor(token, color.hex); // Update the correct theme (dark or light)
@@ -32,11 +36,21 @@ export default function ColorPicker({
                     style={{ backgroundColor: color }}
                 ></PopoverTrigger>
                 <PopoverContent className="w-fit p-1" side="right">
-                    <ChromePicker
-                        color={color}
-                        onChange={handleChange}
-                        disableAlpha={true}
-                    />
+                    <div style={{ background: "red" }}>
+                        <ChromePicker
+                            color={color}
+                            onChange={handleChange}
+                            disableAlpha={true}
+                            styles={{
+                                default: {
+                                    body: {
+                                        fontFamily: "var(--font-geist-sans)",
+                                        fontSize: "12px",
+                                    },
+                                },
+                            }}
+                        />
+                    </div>
                 </PopoverContent>
             </Popover>
         </>
