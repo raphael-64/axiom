@@ -608,6 +608,54 @@ export const registerGeorge: OnMount = (editor, monaco) => {
           insertText: "N",
           range,
         },
+        {
+          label: "trans",
+          kind: monaco.languages.CompletionItemKind.Function,
+          insertText: "trans",
+          range,
+        },
+        {
+          label: "for every",
+          kind: monaco.languages.CompletionItemKind.Function,
+          insertText: "for every",
+          range,
+        },
+        {
+          label: "for some",
+          kind: monaco.languages.CompletionItemKind.Function,
+          insertText: "for some",
+          range,
+        },
+        {
+          label: "closed",
+          kind: monaco.languages.CompletionItemKind.Function,
+          insertText: "closed",
+          range,
+        },
+        {
+          label: "set",
+          kind: monaco.languages.CompletionItemKind.Function,
+          insertText: "set",
+          range,
+        },
+        {
+          label: "arith",
+          kind: monaco.languages.CompletionItemKind.Function,
+          insertText: "arith",
+          range,
+        },
+        {
+          label: "Delta",
+          kind: monaco.languages.CompletionItemKind.Function,
+          insertText: "Delta",
+          range,
+        },
+        {
+          label: "Xi",
+          kind: monaco.languages.CompletionItemKind.Function,
+          insertText: "Xi",
+          range,
+        },
       ];
 
       return { suggestions };
