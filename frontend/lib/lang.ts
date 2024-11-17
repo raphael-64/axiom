@@ -85,12 +85,12 @@ export const registerGeorge: OnMount = (editor, monaco) => {
 
         // Operators
         [
-          /\b(in|sube|sub|pow|union|inter|card|gen_U|dom|ran|id|iter|seq)\b/,
+          /\b(in|sube|sub|pow|union|inter|card|gen_U|dom|ran|id|iter|seq|compl)\b/,
           "constant.numeric",
         ],
 
         // Special symbols
-        [/[&()+:;=\|\-<>?!]/, "constant.numeric"],
+        [/[&()+:;=\|\-<>?!*]|diff|prod/, "constant.numeric"],
 
         // Identifiers with numbers - must be before standalone numbers
         [/[a-zA-Z_]\w*/, "identifier"],
@@ -606,6 +606,24 @@ export const registerGeorge: OnMount = (editor, monaco) => {
           label: "N",
           kind: monaco.languages.CompletionItemKind.Constant,
           insertText: "N",
+          range,
+        },
+        {
+          label: "compl",
+          kind: monaco.languages.CompletionItemKind.Operator,
+          insertText: "compl",
+          range,
+        },
+        {
+          label: "diff",
+          kind: monaco.languages.CompletionItemKind.Operator,
+          insertText: "diff",
+          range,
+        },
+        {
+          label: "prod",
+          kind: monaco.languages.CompletionItemKind.Operator,
+          insertText: "prod",
           range,
         },
       ];
