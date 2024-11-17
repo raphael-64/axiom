@@ -11,8 +11,14 @@ export const registerGeorge: OnMount = (editor, monaco) => {
 
   // Set language configuration for auto-closing brackets
   monaco.languages.setLanguageConfiguration("george", {
-    surroundingPairs: [{ open: "{", close: "}" }],
-    autoClosingPairs: [{ open: "{", close: "}" }],
+    surroundingPairs: [
+      { open: "{", close: "}" },
+      { open: "(", close: ")" },
+    ],
+    autoClosingPairs: [
+      { open: "{", close: "}" },
+      { open: "(", close: ")" },
+    ],
     indentationRules: {
       increaseIndentPattern: /{$/,
       decreaseIndentPattern: /^}/,
@@ -124,6 +130,12 @@ export const registerGeorge: OnMount = (editor, monaco) => {
           label: "check ST",
           kind: monaco.languages.CompletionItemKind.Keyword,
           insertText: "check ST",
+          range,
+        },
+        {
+          label: "check PRED",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "check PRED",
           range,
         },
         {
@@ -518,6 +530,82 @@ export const registerGeorge: OnMount = (editor, monaco) => {
           label: "ran()",
           kind: monaco.languages.CompletionItemKind.Function,
           insertText: "ran()",
+          range,
+        },
+
+        // Set operators
+        {
+          label: "in",
+          kind: monaco.languages.CompletionItemKind.Operator,
+          insertText: "in",
+          range,
+        },
+        {
+          label: "sube",
+          kind: monaco.languages.CompletionItemKind.Operator,
+          insertText: "sube",
+          range,
+        },
+        {
+          label: "sub",
+          kind: monaco.languages.CompletionItemKind.Operator,
+          insertText: "sub",
+          range,
+        },
+        {
+          label: "union",
+          kind: monaco.languages.CompletionItemKind.Operator,
+          insertText: "union",
+          range,
+        },
+        {
+          label: "inter",
+          kind: monaco.languages.CompletionItemKind.Operator,
+          insertText: "inter",
+          range,
+        },
+        {
+          label: "gen_U",
+          kind: monaco.languages.CompletionItemKind.Operator,
+          insertText: "gen_U",
+          range,
+        },
+        {
+          label: "id",
+          kind: monaco.languages.CompletionItemKind.Operator,
+          insertText: "id",
+          range,
+        },
+        {
+          label: "iter",
+          kind: monaco.languages.CompletionItemKind.Operator,
+          insertText: "iter",
+          range,
+        },
+        {
+          label: "seq",
+          kind: monaco.languages.CompletionItemKind.Operator,
+          insertText: "seq",
+          range,
+        },
+
+        // Built-in constants
+        {
+          label: "empty",
+          kind: monaco.languages.CompletionItemKind.Constant,
+          insertText: "empty",
+          range,
+        },
+        {
+          label: "univ",
+          kind: monaco.languages.CompletionItemKind.Constant,
+          insertText: "univ",
+          range,
+        },
+        {
+          label: "N",
+          kind: monaco.languages.CompletionItemKind.Constant,
+          insertText: "N",
           range,
         },
       ];
