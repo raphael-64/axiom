@@ -84,7 +84,7 @@ export default function ColorPreview() {
         defaultValue={PREVIEW_CODE}
         defaultLanguage="george"
         beforeMount={handleEditorWillMount}
-        theme={theme === "dark" ? "dark" : "light"}
+        theme={resolvedTheme === "dark" ? "dark" : "light"}
         options={{
           readOnly: true,
           minimap: { enabled: false },
