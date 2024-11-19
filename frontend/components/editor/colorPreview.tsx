@@ -10,10 +10,10 @@ a & !a <-> false
 2) false    by contr  // Comments`;
 
 export default function ColorPreview() {
-  const { theme } = useTheme();
+  const { theme, resolvedTheme } = useTheme();
   const colorThemeContext = useColorTheme();
   const colorTheme =
-    theme === "dark"
+    resolvedTheme === "dark"
       ? colorThemeContext?.darkTheme
       : colorThemeContext?.lightTheme;
 

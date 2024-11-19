@@ -113,6 +113,11 @@ export default function EditorLayout({
 
   const [currentFilePath, setCurrentFilePath] = useState<string>();
 
+  const [acceptSuggestionOnEnter, setAcceptSuggestionOnEnter] = useState(() => {
+    const saved = localStorage.getItem("acceptSuggestionOnEnter");
+    return saved !== null ? saved === "true" : true;
+  });
+
   const toggleExplorer = () => {
     const panel = explorerRef.current;
     if (panel) {
@@ -487,9 +492,10 @@ export default function EditorLayout({
         quickSuggestions: autoComplete,
         suggestOnTriggerCharacters: autoComplete,
         parameterHints: { enabled: autoComplete },
+        acceptSuggestionOnEnter: acceptSuggestionOnEnter ? "on" : "off",
       });
     }
-  }, [autoComplete]);
+  }, [autoComplete, acceptSuggestionOnEnter]);
 
   const handleUpload = useCallback(
     async (files: File[]) => {
@@ -600,6 +606,8 @@ export default function EditorLayout({
         userId={userId}
         autoComplete={autoComplete}
         setAutoComplete={setAutoComplete}
+        acceptSuggestionOnEnter={acceptSuggestionOnEnter}
+        setAcceptSuggestionOnEnter={setAcceptSuggestionOnEnter}
       />
       <UploadModal
         open={isUploadOpen}
