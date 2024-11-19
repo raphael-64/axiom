@@ -55,6 +55,7 @@ export default function SettingsModal({
   setAutoComplete,
   acceptSuggestionOnEnter,
   setAcceptSuggestionOnEnter,
+  isConnected,
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -63,6 +64,7 @@ export default function SettingsModal({
   setAutoComplete: (autoComplete: boolean) => void;
   acceptSuggestionOnEnter: boolean;
   setAcceptSuggestionOnEnter: (accept: boolean) => void;
+  isConnected: boolean;
 }) {
   const [activeCategory, setActiveCategory] = useState<Category>("editor");
 
@@ -107,21 +109,38 @@ export default function SettingsModal({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-xl p-0 gap-0">
         <div className="flex h-96">
-          <div className="border-r p-2 space-y-0.5 w-48 bg-tabs-bg">
-            {categories.map((category) => (
-              <Button
-                key={category.id}
-                onClick={() => {
-                  if (category.id === "invites") refetchInvites();
-                  setActiveCategory(category.id);
-                }}
-                variant={activeCategory === category.id ? "secondary" : "ghost"}
-                className="w-full justify-start"
-              >
-                <category.icon className="w-4 h-4" />
-                {category.label}
-              </Button>
-            ))}
+          <div className="border-r p-2 flex flex-col justify-between w-48 bg-tabs-bg">
+            <div className="flex flex-col gap-0.5 w-full">
+              {categories.map((category) => (
+                <Button
+                  key={category.id}
+                  onClick={() => {
+                    if (category.id === "invites") refetchInvites();
+                    setActiveCategory(category.id);
+                  }}
+                  variant={
+                    activeCategory === category.id ? "secondary" : "ghost"
+                  }
+                  className="w-full justify-start"
+                >
+                  <category.icon className="w-4 h-4" />
+                  {category.label}
+                </Button>
+              ))}
+            </div>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <div className="relative size-5 p-1 flex items-center justify-center">
+                {isConnected ? (
+                  <>
+                    <div className="rounded-full size-2 absolute animate-ping bg-green-500 opacity-75" />
+                    <div className="rounded-full size-2 bg-green-500" />
+                  </>
+                ) : (
+                  <div className="rounded-full size-2 bg-red-500" />
+                )}
+              </div>
+              {isConnected ? "Connected to server" : "Disconnected"}
+            </div>
           </div>
           <div className="grow">
             <div className="flex items-center p-4 pb-0 gap-1">

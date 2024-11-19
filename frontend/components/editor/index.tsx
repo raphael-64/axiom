@@ -118,6 +118,9 @@ export default function EditorLayout({
     return saved !== null ? saved === "true" : true;
   });
 
+  // Add state for socket connection status
+  const [isConnected, setIsConnected] = useState(false);
+
   const toggleExplorer = () => {
     const panel = explorerRef.current;
     if (panel) {
@@ -211,7 +214,13 @@ export default function EditorLayout({
       },
     });
 
-    socket.on("connect", () => {});
+    socket.on("connect", () => {
+      setIsConnected(true);
+    });
+
+    socket.on("disconnect", () => {
+      setIsConnected(false);
+    });
 
     socket.on("error", (error: string) => {
       toast.error(error);
@@ -608,6 +617,7 @@ export default function EditorLayout({
         setAutoComplete={setAutoComplete}
         acceptSuggestionOnEnter={acceptSuggestionOnEnter}
         setAcceptSuggestionOnEnter={setAcceptSuggestionOnEnter}
+        isConnected={isConnected}
       />
       <UploadModal
         open={isUploadOpen}
