@@ -26,8 +26,19 @@ export default function ColorPicker({
   }, [defaultColor]);
 
   const handleChange = (color: string) => {
-    setColor(color);
-    updateColor(token, color);
+    if (color !== defaultColor) {
+      setColor(color);
+      updateColor(token, color);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newColor = e.target.value;
+    if (/^#[0-9A-Fa-f]{6}$/.test(newColor)) {
+      handleChange(newColor);
+    } else {
+      setColor(newColor);
+    }
   };
 
   return (
@@ -48,7 +59,7 @@ export default function ColorPicker({
               placeholder="#123ABC"
               className="w-24 font-mono"
               value={color}
-              onChange={(e) => handleChange(e.target.value)}
+              onChange={handleInputChange}
             />
           </div>
         </PopoverContent>
