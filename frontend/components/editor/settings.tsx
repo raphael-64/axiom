@@ -40,10 +40,11 @@ const categories = [
 
 const shortcuts = [
   { label: "Ask George", shortcut: "⌘G" },
-  { label: "Toggle Sidebar", shortcut: "⌘B" },
-  { label: "Toggle Output", shortcut: "⌘J" },
-  { label: "Open Settings", shortcut: "⌘K" },
-  { label: "Upload File", shortcut: "⌘U" },
+  { label: "Toggle explorer panel", shortcut: "⌘B" },
+  { label: "Toggle output panel", shortcut: "⌘J" },
+  { label: "Open settings menu", shortcut: "⌘K" },
+  { label: "Upload into current file", shortcut: "⌘U" },
+  { label: "Delete & decrement lines", shortcut: "⌘X" },
 ];
 
 export default function SettingsModal({
@@ -52,12 +53,16 @@ export default function SettingsModal({
   userId,
   autoComplete,
   setAutoComplete,
+  acceptSuggestionOnEnter,
+  setAcceptSuggestionOnEnter,
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
   userId: string;
   autoComplete: boolean;
   setAutoComplete: (autoComplete: boolean) => void;
+  acceptSuggestionOnEnter: boolean;
+  setAcceptSuggestionOnEnter: (accept: boolean) => void;
 }) {
   const [activeCategory, setActiveCategory] = useState<Category>("editor");
 
@@ -79,7 +84,7 @@ export default function SettingsModal({
   const lightThemeColors = colorTheme?.lightTheme.rules;
 
   const [themeColors, setThemeColors] = useState(
-    theme === "dark" ? darkThemeColors : lightThemeColors
+    resolvedTheme === "dark" ? darkThemeColors : lightThemeColors
   );
 
   const colorNames = [
@@ -93,8 +98,10 @@ export default function SettingsModal({
   ];
 
   useEffect(() => {
-    setThemeColors(theme === "dark" ? darkThemeColors : lightThemeColors);
-  }, [colorTheme]);
+    setThemeColors(
+      resolvedTheme === "dark" ? darkThemeColors : lightThemeColors
+    );
+  }, [colorTheme, resolvedTheme]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -176,7 +183,7 @@ export default function SettingsModal({
                             <HelpCircle className="size-3 text-muted-foreground" />
                           </TooltipTrigger>
                           <TooltipContent>
-                            Toggle code completion suggestions
+                            Toggles code completion language suggestions.
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -186,6 +193,35 @@ export default function SettingsModal({
                       onCheckedChange={(checked) => {
                         setAutoComplete(checked);
                         localStorage.setItem("autoComplete", String(checked));
+                      }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between h-8">
+                    <div className="flex items-center gap-2">
+                      <label>Accept Suggestion on Enter</label>
+                      <TooltipProvider>
+                        <Tooltip delayDuration={0}>
+                          <TooltipTrigger>
+                            <HelpCircle className="size-3 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            Controls whether suggestions should be accepted on
+                            Enter, in addition to Tab.
+                            <br />
+                            Helps to avoid ambiguity between inserting new lines
+                            or accepting suggestions.
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <Switch
+                      checked={acceptSuggestionOnEnter}
+                      onCheckedChange={(checked) => {
+                        setAcceptSuggestionOnEnter(checked);
+                        localStorage.setItem(
+                          "acceptSuggestionOnEnter",
+                          String(checked)
+                        );
                       }}
                     />
                   </div>
