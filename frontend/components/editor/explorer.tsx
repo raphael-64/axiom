@@ -9,6 +9,7 @@ import {
   Trash,
   Upload,
   Users,
+  ChevronRight,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -309,7 +310,11 @@ function FolderItem({
             workspace ? "group/workspace" : ""
           }`}
         >
-          <span className="w-4 text-xs">{isOpen ? "▼" : "▶"}</span>
+          <ChevronRight
+            className={`size-3.5 transition-transform ${
+              isOpen ? "rotate-90" : ""
+            }`}
+          />
           {name}
         </button>
 
@@ -340,7 +345,11 @@ function FolderItem({
               workspace ? "group/workspace" : ""
             } ${isDropdownOpen || isContextMenuOpen ? "bg-muted" : ""}`}
           >
-            <span className="w-4 text-xs">{isOpen ? "▼" : "▶"}</span>
+            <ChevronRight
+              className={`size-3.5 transition-transform ${
+                isOpen ? "rotate-90" : ""
+              }`}
+            />
             {name}
 
             <WorkspaceFolderMenu

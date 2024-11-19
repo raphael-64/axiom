@@ -10,7 +10,7 @@ An editor interface for George, for [SE212 (Logic and Computation)](https://stud
   - View other cursors and selections
 - **Intelligent language support**
   - Auto-incrementing line numbers
-  - TODO: Auto-decrementing line numbers (`⌘+X` or `⌘+⌫`)
+  - Auto-decrementing line numbers (`⌘+X`)
   - Auto-updating rule references
   - Auto-closing braces and indentations
   - Comments (`⌘+/`)

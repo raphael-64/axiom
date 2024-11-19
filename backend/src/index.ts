@@ -71,6 +71,7 @@ app.get("/api/workspaces", async (req: Request, res: Response) => {
     const workspaces = await getWorkspacesForUser(userId);
     res.json({ workspaces });
   } catch (error) {
+    console.error("Failed to fetch workspaces", error);
     res.status(500).json({ message: "Failed to fetch workspaces" });
   }
 });
