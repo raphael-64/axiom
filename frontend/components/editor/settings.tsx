@@ -84,7 +84,7 @@ export default function SettingsModal({
   const lightThemeColors = colorTheme?.lightTheme.rules;
 
   const [themeColors, setThemeColors] = useState(
-    theme === "dark" ? darkThemeColors : lightThemeColors
+    resolvedTheme === "dark" ? darkThemeColors : lightThemeColors
   );
 
   const colorNames = [
@@ -98,8 +98,10 @@ export default function SettingsModal({
   ];
 
   useEffect(() => {
-    setThemeColors(theme === "dark" ? darkThemeColors : lightThemeColors);
-  }, [colorTheme]);
+    setThemeColors(
+      resolvedTheme === "dark" ? darkThemeColors : lightThemeColors
+    );
+  }, [colorTheme, resolvedTheme]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
