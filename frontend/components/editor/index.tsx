@@ -633,7 +633,11 @@ export default function EditorLayout({
           toggleOutput={toggleOutput}
           setIsSettingsOpen={setIsSettingsOpen}
         />
-        <ResizablePanelGroup className="grow" direction="horizontal">
+        <ResizablePanelGroup
+          className="grow"
+          direction="horizontal"
+          autoSaveId="explorer-editor"
+        >
           <ResizablePanel
             ref={explorerRef}
             collapsible
@@ -652,7 +656,10 @@ export default function EditorLayout({
           </ResizablePanel>
           <ResizableHandle />
           <ResizablePanel defaultSize={85}>
-            <ResizablePanelGroup direction="vertical">
+            <ResizablePanelGroup
+              direction="vertical"
+              autoSaveId="editor-output"
+            >
               <ResizablePanel defaultSize={100}>
                 <div
                   className={`flex flex-col w-full h-full ${
