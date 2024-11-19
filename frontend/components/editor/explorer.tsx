@@ -121,7 +121,7 @@ export default function Explorer({
   }, [files, workspacesData]);
 
   return (
-    <ResizablePanelGroup direction="vertical">
+    <ResizablePanelGroup direction="vertical" autoSaveId="files-workspaces">
       <ResizablePanel defaultSize={80}>
         <div className="h-full flex flex-col">
           <div className="flex items-center justify-between px-2 py-2">
