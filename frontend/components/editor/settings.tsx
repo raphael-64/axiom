@@ -40,10 +40,11 @@ const categories = [
 
 const shortcuts = [
   { label: "Ask George", shortcut: "⌘G" },
-  { label: "Toggle Sidebar", shortcut: "⌘B" },
-  { label: "Toggle Output", shortcut: "⌘J" },
-  { label: "Open Settings", shortcut: "⌘K" },
-  { label: "Upload File", shortcut: "⌘U" },
+  { label: "Toggle explorer panel", shortcut: "⌘B" },
+  { label: "Toggle output panel", shortcut: "⌘J" },
+  { label: "Open settings menu", shortcut: "⌘K" },
+  { label: "Upload into current file", shortcut: "⌘U" },
+  { label: "Delete & decrement lines", shortcut: "⌘X" },
 ];
 
 export default function SettingsModal({
