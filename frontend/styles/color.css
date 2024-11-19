@@ -1,0 +1,14 @@
+.color-picker .react-colorful__saturation {
+  border-radius: calc(var(--radius) - 4px);
+}
+
+.color-picker .react-colorful__hue {
+  border-radius: 0 0 calc(var(--radius) - 4px) calc(var(--radius) - 4px);
+  height: 16px;
+}
+
+.color-picker .react-colorful__pointer {
+  width: 17px;
+  height: 17px;
+  border-width: 1px;
+}

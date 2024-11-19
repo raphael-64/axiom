@@ -40,9 +40,11 @@ import { useFiles } from "@/lib/query";
 import { useTheme } from "next-themes";
 
 // Add import at the top
-import { darkTheme, lightTheme } from "@/lib/colors";
+import { darkThemeOld, lightThemeOld } from "@/lib/colors";
 import { createUserDecorationStyles } from "@/lib/decorations";
 import { setupCollaboration, cleanupCollaboration } from "@/lib/collaboration";
+
+import { useColorTheme } from "@/components/providers/color-context";
 
 const sizes = {
   min: 140,
@@ -57,7 +59,13 @@ export default function EditorLayout({
   userId: string;
 }) {
   const { width } = useWindowSize();
+
   const { theme } = useTheme();
+
+  const colorTheme = useColorTheme();
+  const darkTheme = colorTheme?.darkTheme;
+  const lightTheme = colorTheme?.lightTheme;
+
   const { data: filesData } = useFiles(files);
 
   const explorerRef = useRef<ImperativePanelHandle>(null);
@@ -427,7 +435,9 @@ export default function EditorLayout({
         );
         if (!hasOtherWorkspaceTabs) {
           setActiveWorkspaceId(undefined);
-          socket?.emit("leaveRoom", { workspaceId: closingTab.workspaceId });
+          socket?.emit("leaveRoom", {
+            workspaceId: closingTab.workspaceId,
+          });
         }
       }
 
@@ -501,11 +511,17 @@ export default function EditorLayout({
 
   useEffect(() => {
     if (!monacoInstance) return;
-
-    monacoInstance.editor.defineTheme("dark", darkTheme);
-    monacoInstance.editor.defineTheme("light", lightTheme);
+    console.log("Updating Monaco theme from editor");
+    monacoInstance.editor.defineTheme(
+      "dark",
+      darkTheme ? darkTheme : darkThemeOld
+    );
+    monacoInstance.editor.defineTheme(
+      "light",
+      lightTheme ? lightTheme : lightThemeOld
+    );
     monacoInstance.editor.setTheme(resolvedTheme === "dark" ? "dark" : "light");
-  }, [monacoInstance, resolvedTheme]);
+  }, [monacoInstance, resolvedTheme, darkTheme, lightTheme]);
 
   if (!width) return null;
 
@@ -551,6 +567,14 @@ export default function EditorLayout({
 
     registerGeorge(editor, monaco);
     monaco.editor.setModelLanguage(editor.getModel()!, "george");
+
+    // editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, () => {
+    //     setIsSettingsOpen(true);
+    // });
+
+    // editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyG, () => {
+    //     handleAskGeorge();
+    // });
 
     const decorationsCollection = editor.createDecorationsCollection();
     setDecorationsCollection(decorationsCollection);

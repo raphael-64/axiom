@@ -1,5 +1,5 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Keyboard, FileCode2, Users } from "lucide-react";
+import { Keyboard, FileCode2, Users, Palette, HelpCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   Select,
@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/select";
 import { Button } from "../ui/button";
 import { Switch } from "@/components/ui/switch";
-import { HelpCircle } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -24,12 +23,19 @@ import { RotateCw } from "lucide-react";
 import { TooltipButton } from "@/components/ui/tooltip-button";
 import { useTheme } from "next-themes";
 
-type Category = "editor" | "shortcuts" | "invites";
+// import { darkTheme, lightTheme } from "@/lib/colors";
+import ColorPicker from "./colorPicker";
+
+import { useColorTheme } from "@/components/providers/color-context";
+import ColorPreview from "./colorPreview";
+
+type Category = "editor" | "shortcuts" | "invites" | "colours";
 
 const categories = [
   { id: "editor" as const, label: "Code Editor", icon: FileCode2 },
   { id: "shortcuts" as const, label: "Shortcuts", icon: Keyboard },
   { id: "invites" as const, label: "Invites", icon: Users },
+  { id: "colours" as const, label: "Colours", icon: Palette },
 ];
 
 const shortcuts = [
@@ -68,6 +74,28 @@ export default function SettingsModal({
   const respondToInvite = useRespondToInvite();
   const { theme, setTheme, resolvedTheme } = useTheme();
 
+  const colorTheme = useColorTheme();
+  const darkThemeColors = colorTheme?.darkTheme.rules;
+  const lightThemeColors = colorTheme?.lightTheme.rules;
+
+  const [themeColors, setThemeColors] = useState(
+    theme === "dark" ? darkThemeColors : lightThemeColors
+  );
+
+  const colorNames = [
+    "Comments",
+    "George Commands",
+    "Keywords",
+    "Rules",
+    "Operators",
+    "Literals",
+    "Line Numbers",
+  ];
+
+  useEffect(() => {
+    setThemeColors(theme === "dark" ? darkThemeColors : lightThemeColors);
+  }, [colorTheme]);
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-xl p-0 gap-0">
@@ -100,6 +128,18 @@ export default function SettingsModal({
                   variant="ghost"
                   size="xsIcon"
                   onClick={() => refetchInvites()}
+                >
+                  <RotateCw className="!size-3.5" />
+                </TooltipButton>
+              )}
+              {activeCategory === "colours" && (
+                <TooltipButton
+                  tooltip="Default Colours"
+                  variant="ghost"
+                  size="xsIcon"
+                  onClick={() => {
+                    colorTheme?.resetToDefault();
+                  }}
                 >
                   <RotateCw className="!size-3.5" />
                 </TooltipButton>
@@ -238,6 +278,24 @@ export default function SettingsModal({
                     })
                   )}
                 </div>
+              ) : activeCategory === "colours" ? (
+                <>
+                  <div className="space-y-2 text-sm">
+                    {themeColors?.map((item, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between"
+                      >
+                        <div>{colorNames[index]}</div>
+                        <ColorPicker
+                          token={item.token}
+                          defaultColor={"#" + item.foreground}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <ColorPreview />
+                </>
               ) : null}
             </div>
           </div>

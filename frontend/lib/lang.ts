@@ -51,7 +51,7 @@ export const registerGeorge: OnMount = (editor, monaco) => {
 
         // Entire lines starting with # should be colored
         [
-          /^.*#(?:check\s+(?:PROP|ND|PC|Z|TP|ST|PRED|NONE)|[qua][ \t].*$)/,
+          /^.*#(?:check\s+(?:PROP|ND|PC|Z|TP|ST|PREDTYPES|PRED|NONE)|[qua][ \t].*$)/,
           "constant.other",
         ],
 
