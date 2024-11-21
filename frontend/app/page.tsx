@@ -8,13 +8,5 @@ const EditorDynamic = dynamic(() => import("@/components/editor"), {
 
 export default async function Home() {
   const files: FilesResponse = await getFiles();
-
-  const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL;
-  if (!serverUrl) return null;
-
-  return (
-    <>
-      <EditorDynamic files={files} />
-    </>
-  );
+  return <EditorDynamic files={files} />;
 }

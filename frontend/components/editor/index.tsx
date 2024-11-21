@@ -130,6 +130,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
       outputRef.current?.expand();
     } catch (error) {
       console.error(error);
+      toast.error("Error: Failed to get response from George");
       setGeorgeResponse("Error: Failed to get response from George");
     } finally {
       setLoading(false);
