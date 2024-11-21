@@ -93,15 +93,10 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     return saved !== null ? saved === "true" : true;
   });
 
-  const [currentFilePath, setCurrentFilePath] = useState<string>();
-
   const [acceptSuggestionOnEnter, setAcceptSuggestionOnEnter] = useState(() => {
     const saved = localStorage.getItem("acceptSuggestionOnEnter");
     return saved !== null ? saved === "true" : true;
   });
-
-  // Add state for socket connection status
-  const [isConnected, setIsConnected] = useState(false);
 
   const toggleExplorer = () => {
     const panel = explorerRef.current;
@@ -190,9 +185,6 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
 
   const handleEditorContent = async (path: string) => {
     if (!editorRef || !monacoInstance) return;
-
-    // Set current file path
-    setCurrentFilePath(path);
 
     // Cleanup previous
     monacoBinding?.destroy();
@@ -374,7 +366,6 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
         setAutoComplete={setAutoComplete}
         acceptSuggestionOnEnter={acceptSuggestionOnEnter}
         setAcceptSuggestionOnEnter={setAcceptSuggestionOnEnter}
-        isConnected={isConnected}
       />
       <UploadModal
         open={isUploadOpen}
