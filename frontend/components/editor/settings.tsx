@@ -16,25 +16,20 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useUserInvites, useRespondToInvite, useWorkspaces } from "@/lib/query";
-import { toast } from "sonner";
-import { InviteWithWorkspace } from "@/lib/types";
 import { RotateCw } from "lucide-react";
 import { TooltipButton } from "@/components/ui/tooltip-button";
 import { useTheme } from "next-themes";
 
-// import { darkTheme, lightTheme } from "@/lib/colors";
 import ColorPicker from "./colorPicker";
 
 import { useColorTheme } from "@/components/providers/color-context";
 import ColorPreview from "./colorPreview";
 
-type Category = "editor" | "shortcuts" | "invites" | "colours";
+type Category = "editor" | "shortcuts" | "colours";
 
 const categories = [
   { id: "editor" as const, label: "Code Editor", icon: FileCode2 },
   { id: "shortcuts" as const, label: "Shortcuts", icon: Keyboard },
-  { id: "invites" as const, label: "Invites", icon: Users },
   { id: "colours" as const, label: "Colours", icon: Palette },
 ];
 
@@ -50,21 +45,17 @@ const shortcuts = [
 export default function SettingsModal({
   open,
   setOpen,
-  userId,
   autoComplete,
   setAutoComplete,
   acceptSuggestionOnEnter,
   setAcceptSuggestionOnEnter,
-  isConnected,
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
-  userId: string;
   autoComplete: boolean;
   setAutoComplete: (autoComplete: boolean) => void;
   acceptSuggestionOnEnter: boolean;
   setAcceptSuggestionOnEnter: (accept: boolean) => void;
-  isConnected: boolean;
 }) {
   const [activeCategory, setActiveCategory] = useState<Category>("editor");
 
@@ -72,13 +63,6 @@ export default function SettingsModal({
     if (!open) setActiveCategory("editor");
   }, [open]);
 
-  const { data: workspaces } = useWorkspaces(userId);
-  const {
-    data: invites,
-    refetch: refetchInvites,
-    isLoading: invitesLoading,
-  } = useUserInvites(userId);
-  const respondToInvite = useRespondToInvite();
   const { theme, setTheme, resolvedTheme } = useTheme();
 
   const colorTheme = useColorTheme();
@@ -109,55 +93,24 @@ export default function SettingsModal({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-xl p-0 gap-0">
         <div className="flex h-96">
-          <div className="border-r p-2 flex flex-col justify-between w-48 bg-tabs-bg">
-            <div className="flex flex-col gap-0.5 w-full">
-              {categories.map((category) => (
-                <Button
-                  key={category.id}
-                  onClick={() => {
-                    if (category.id === "invites") refetchInvites();
-                    setActiveCategory(category.id);
-                  }}
-                  variant={
-                    activeCategory === category.id ? "secondary" : "ghost"
-                  }
-                  className="w-full justify-start"
-                >
-                  <category.icon className="w-4 h-4" />
-                  {category.label}
-                </Button>
-              ))}
-            </div>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <div className="relative size-5 p-1 flex items-center justify-center">
-                {isConnected ? (
-                  <>
-                    <div className="rounded-full size-2 absolute animate-ping bg-green-500 opacity-75" />
-                    <div className="rounded-full size-2 bg-green-500" />
-                  </>
-                ) : (
-                  <div className="rounded-full size-2 bg-red-500" />
-                )}
-              </div>
-              {isConnected ? "Connected to server" : "Disconnected"}
-            </div>
+          <div className="border-r p-2 flex flex-col gap-0.5 w-48 bg-tabs-bg">
+            {categories.map((category) => (
+              <Button
+                key={category.id}
+                onClick={() => setActiveCategory(category.id)}
+                variant={activeCategory === category.id ? "secondary" : "ghost"}
+                className="w-full justify-start"
+              >
+                <category.icon className="w-4 h-4" />
+                {category.label}
+              </Button>
+            ))}
           </div>
           <div className="grow">
             <div className="flex items-center p-4 pb-0 gap-1">
               <div className="font-semibold">
                 {categories.find((c) => c.id === activeCategory)?.label}
               </div>
-              {activeCategory === "invites" && (
-                <TooltipButton
-                  tooltip="Refetch invites"
-                  disabled={invites === undefined || invitesLoading}
-                  variant="ghost"
-                  size="xsIcon"
-                  onClick={() => refetchInvites()}
-                >
-                  <RotateCw className="!size-3.5" />
-                </TooltipButton>
-              )}
               {activeCategory === "colours" && (
                 <TooltipButton
                   tooltip="Default Colours"
@@ -258,80 +211,6 @@ export default function SettingsModal({
                       </span>
                     </div>
                   ))}
-                </div>
-              ) : activeCategory === "invites" ? (
-                <div className="space-y-2">
-                  {!invites ? (
-                    <div className="text-sm text-muted-foreground flex items-center">
-                      <RotateCw className="animate-spin size-4 mr-2" />
-                      Loading...
-                    </div>
-                  ) : invites.length === 0 ? (
-                    <div className="text-sm text-muted-foreground">
-                      No pending invites.
-                    </div>
-                  ) : (
-                    invites.map((invite: InviteWithWorkspace) => {
-                      const hasConflict = workspaces?.workspaces?.some(
-                        (w) =>
-                          w.project === invite.workspace.project &&
-                          !w.invites.some((i) => i.id === invite.id)
-                      );
-
-                      return (
-                        <div
-                          key={invite.id}
-                          className="border rounded-md p-3 space-y-2"
-                        >
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <div className="font-medium">
-                                {invite.workspace.project}
-                              </div>
-                              <div className="text-muted-foreground text-xs w-full overflow-hidden text-ellipsis">
-                                {invite.workspace.users
-                                  .map((u) => u.id)
-                                  .join(", ")}
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                disabled={respondToInvite.isPending}
-                                onClick={() => {
-                                  if (hasConflict) {
-                                    toast.error(
-                                      "You already have a workspace with this project name"
-                                    );
-                                    return;
-                                  }
-                                  respondToInvite.mutate({
-                                    inviteId: invite.id,
-                                    accept: true,
-                                  });
-                                }}
-                              >
-                                Accept
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                disabled={respondToInvite.isPending}
-                                onClick={() =>
-                                  respondToInvite.mutate({
-                                    inviteId: invite.id,
-                                    accept: false,
-                                  })
-                                }
-                              >
-                                Decline
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
                 </div>
               ) : activeCategory === "colours" ? (
                 <>

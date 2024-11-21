@@ -21,19 +21,14 @@ import Explorer from "./explorer";
 import SettingsModal from "./settings";
 import { UploadModal } from "./upload";
 import Tabs from "./tabs";
-import ManageAccessModal from "./access";
 import Toolbar from "./toolbar";
 
 // Types and utilities
 import { FilesResponse, Tab } from "@/lib/types";
 import { registerGeorge } from "@/lib/lang";
-import { API_BASE_URL, askGeorge } from "@/lib/actions";
+import { askGeorge } from "@/lib/actions";
 import { ImperativePanelHandle } from "react-resizable-panels";
 import { toast } from "sonner";
-
-// Collaboration
-import * as Y from "yjs";
-import { Socket, io } from "socket.io-client";
 
 // Update the import to include useFiles
 import { useFiles } from "@/lib/query";
@@ -41,8 +36,6 @@ import { useTheme } from "next-themes";
 
 // Add import at the top
 import { darkThemeOld, lightThemeOld } from "@/lib/colors";
-import { createUserDecorationStyles } from "@/lib/decorations";
-import { setupCollaboration, cleanupCollaboration } from "@/lib/collaboration";
 
 import { useColorTheme } from "@/components/providers/color-context";
 
@@ -51,22 +44,18 @@ const sizes = {
   default: 180,
 };
 
-export default function EditorLayout({
-  files,
-  userId,
-}: {
-  files: FilesResponse;
-  userId: string;
-}) {
+export default function EditorLayout({ files }: { files: FilesResponse }) {
   const { width } = useWindowSize();
-
-  const { theme } = useTheme();
 
   const colorTheme = useColorTheme();
   const darkTheme = colorTheme?.darkTheme;
   const lightTheme = colorTheme?.lightTheme;
 
-  const { data: filesData } = useFiles(files);
+  const {
+    data: filesData,
+    error: filesError,
+    refetch: refetchFiles,
+  } = useFiles(files);
 
   const explorerRef = useRef<ImperativePanelHandle>(null);
   const outputRef = useRef<ImperativePanelHandle>(null);
@@ -83,8 +72,7 @@ export default function EditorLayout({
   const [activeTabIndex, setActiveTabIndex] = useState<number>(-1);
   const activeId = useMemo(() => {
     if (activeTabIndex >= 0 && openTabs[activeTabIndex]) {
-      const workspaceId = openTabs[activeTabIndex].workspaceId;
-      return workspaceId ?? openTabs[activeTabIndex].path;
+      openTabs[activeTabIndex].path;
     }
     return undefined;
   }, [activeTabIndex, openTabs]);
@@ -92,16 +80,10 @@ export default function EditorLayout({
   // Modal state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [manageAccessId, setManageAccessId] = useState<string | null>(null);
 
   // George state
   const [loading, setLoading] = useState(false);
   const [georgeResponse, setGeorgeResponse] = useState<string>("");
-
-  // Collaboration state
-  const workspaceDocsRef = useRef<Map<string, Y.Doc>>(new Map());
-  const [socket, setSocket] = useState<Socket>();
-  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>();
 
   const [decorationsCollection, setDecorationsCollection] =
     useState<monaco.editor.IEditorDecorationsCollection>();
@@ -206,34 +188,7 @@ export default function EditorLayout({
     return () => window.removeEventListener("keydown", handleKeyDown, true);
   }, [handleKeyDown]);
 
-  // Initialize socket connection
-  useEffect(() => {
-    const socket = io(API_BASE_URL, {
-      auth: {
-        userId,
-      },
-    });
-
-    socket.on("connect", () => {
-      setIsConnected(true);
-    });
-
-    socket.on("disconnect", () => {
-      setIsConnected(false);
-    });
-
-    socket.on("error", (error: string) => {
-      toast.error(error);
-    });
-
-    setSocket(socket);
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [userId]);
-
-  const handleEditorContent = async (path: string, workspaceId?: string) => {
+  const handleEditorContent = async (path: string) => {
     if (!editorRef || !monacoInstance) return;
 
     // Set current file path
@@ -242,192 +197,24 @@ export default function EditorLayout({
     // Cleanup previous
     monacoBinding?.destroy();
 
-    if (workspaceId) {
-      // Prevent multiple workspace connections
-      if (activeWorkspaceId && activeWorkspaceId !== workspaceId) {
-        toast.error("Close files from other workspace first");
-        return;
-      }
+    // Local file
+    const content = localStorage.getItem(path) || "";
+    const model = monacoInstance.editor.createModel(content, "george");
+    editorRef.setModel(model);
 
-      // Setup model first
-      const model = monacoInstance.editor.createModel("", "george");
-      editorRef.setModel(model);
-
-      try {
-        const { doc, binding, awareness } = await setupCollaboration({
-          socket: socket!,
-          path,
-          workspaceId,
-          editor: editorRef,
-          model,
-          userId,
-          decorationsCollection: decorationsCollection!,
-        });
-
-        workspaceDocsRef.current.set(path, doc);
-        setMonacoBinding(binding);
-
-        // Add socket listener for awareness updates
-        socket?.on(
-          "awareness-update",
-          ({ path: updatePath, clientId: updateClientId, state }) => {
-            console.log("Received awareness update:", {
-              path: updatePath,
-              clientId: updateClientId,
-              state,
-            });
-
-            if (decorationsCollection) {
-              // Only process awareness if paths match and it's a different user
-              if (
-                updatePath === currentFilePath && // Compare with current file path
-                updatePath === path &&
-                updateClientId !== socket.id &&
-                state?.user
-              ) {
-                awareness.getStates().set(updateClientId, state);
-
-                // Clear previous decorations for this user
-                const styleEl = document.getElementById(
-                  `user-${updateClientId}-style`
-                );
-                if (styleEl) {
-                  styleEl.remove();
-                }
-
-                // Update cursor decorations
-                if (state.user?.cursor) {
-                  const { position, selection } = state.user.cursor;
-                  const decorations: monaco.editor.IModelDeltaDecoration[] = [];
-
-                  // Add cursor line
-                  decorations.push({
-                    range: new monacoInstance.Range(
-                      position.lineNumber,
-                      position.column,
-                      position.lineNumber,
-                      position.column + 1
-                    ),
-                    options: {
-                      className: `cursor-${updateClientId}`,
-                      beforeContentClassName: `cursor-${updateClientId}-line`,
-                      hoverMessage: {
-                        value: `**${state.user.name}**`,
-                        isTrusted: true,
-                        supportThemeIcons: true,
-                      },
-                    },
-                  });
-
-                  // Add selection if exists
-                  if (selection) {
-                    decorations.push({
-                      range: new monacoInstance.Range(
-                        selection.startLineNumber,
-                        selection.startColumn,
-                        selection.endLineNumber,
-                        selection.endColumn
-                      ),
-                      options: {
-                        className: `selection-${updateClientId}`,
-                      },
-                    });
-                  }
-
-                  // Update styles
-                  const styleId = `user-${updateClientId}-style`;
-                  let styleEl = document.getElementById(styleId);
-                  if (!styleEl) {
-                    styleEl = document.createElement("style");
-                    styleEl.id = styleId;
-                    document.head.appendChild(styleEl);
-                  }
-
-                  styleEl.textContent = createUserDecorationStyles(
-                    updateClientId,
-                    state.user.color
-                  );
-
-                  // Clear previous decorations and set new ones
-                  decorationsCollection.clear();
-                  decorationsCollection.set(decorations);
-                }
-              } else {
-                // Remove decorations if user switched to different file
-                decorationsCollection.clear();
-                const styleEl = document.getElementById(
-                  `user-${updateClientId}-style`
-                );
-                styleEl?.remove();
-              }
-            }
-          }
-        );
-
-        // Add user left handler
-        socket?.on("user-left", ({ clientId, userId }) => {
-          // Remove cursor decorations for disconnected user
-          if (decorationsCollection) {
-            decorationsCollection.clear();
-          }
-          const styleEl = document.getElementById(`user-${clientId}-style`);
-          styleEl?.remove();
-
-          // Show toast notification
-          toast.info(`${userId} left the workspace`);
-        });
-      } catch (error) {
-        console.error("Failed to setup collaboration:", error);
-        toast.error("Failed to setup collaboration");
-      }
-    } else {
-      // Local file
-      const content = localStorage.getItem(path) || "";
-      const model = monacoInstance.editor.createModel(content, "george");
-      editorRef.setModel(model);
-
-      model.onDidChangeContent(() => {
-        localStorage.setItem(path, model.getValue());
-      });
-    }
+    model.onDidChangeContent(() => {
+      localStorage.setItem(path, model.getValue());
+    });
   };
 
-  const handleFileClick = async (
-    path: string,
-    name: string,
-    workspaceId?: string
-  ) => {
-    // Check if trying to open file from different workspace
-    if (workspaceId && activeWorkspaceId && workspaceId !== activeWorkspaceId) {
-      const workspaceName = openTabs.find(
-        (tab) => tab.workspaceId === activeWorkspaceId
-      )?.name;
-      toast.error(
-        workspaceName
-          ? `Another workspace (${workspaceName}) is already open.`
-          : "Another workspace is already open."
-      );
-      return;
-    }
-
+  const handleFileClick = async (path: string, name: string) => {
     const existingIndex = openTabs.findIndex((tab) => tab.path === path);
 
     if (existingIndex >= 0) {
       setActiveTabIndex(existingIndex);
     } else {
-      if (workspaceId) {
-        setActiveWorkspaceId(workspaceId);
-        // Add the tab first
-        setOpenTabs((prev) => [...prev, { path, name, workspaceId }]);
-        setActiveTabIndex(openTabs.length);
-        // Immediately handle the editor content
-        if (editorRef && monacoInstance) {
-          await handleEditorContent(path, workspaceId);
-        }
-      } else {
-        setOpenTabs((prev) => [...prev, { path, name }]);
-        setActiveTabIndex(openTabs.length);
-      }
+      setOpenTabs((prev) => [...prev, { path, name }]);
+      setActiveTabIndex(openTabs.length);
     }
   };
 
@@ -440,20 +227,6 @@ export default function EditorLayout({
 
     setOpenTabs((prevTabs) => {
       const newTabs = prevTabs.filter((_, i) => i !== indexToClose);
-
-      // Clean up workspace doc and connection if needed
-      if (closingTab.workspaceId) {
-        workspaceDocsRef.current.delete(closingTab.path);
-        const hasOtherWorkspaceTabs = newTabs.some(
-          (tab) => tab.workspaceId === closingTab.workspaceId
-        );
-        if (!hasOtherWorkspaceTabs) {
-          setActiveWorkspaceId(undefined);
-          socket?.emit("leaveRoom", {
-            workspaceId: closingTab.workspaceId,
-          });
-        }
-      }
 
       // Handle active tab updates
       if (indexToClose === activeTabIndex) {
@@ -474,24 +247,10 @@ export default function EditorLayout({
     });
   };
 
-  // Clean up on unmount
-  useEffect(() => {
-    return () => {
-      if (socket) {
-        cleanupCollaboration({
-          socket,
-          workspaceDocs: workspaceDocsRef.current,
-          binding: monacoBinding,
-          decorationsCollection,
-        });
-      }
-    };
-  }, []);
-
   useEffect(() => {
     if (activeTabIndex >= 0 && openTabs[activeTabIndex]) {
       const tab = openTabs[activeTabIndex];
-      handleEditorContent(tab.path, tab.workspaceId);
+      handleEditorContent(tab.path);
     }
   }, [activeTabIndex, openTabs, activeId]);
 
@@ -538,6 +297,19 @@ export default function EditorLayout({
     monacoInstance.editor.setTheme(resolvedTheme === "dark" ? "dark" : "light");
   }, [monacoInstance, resolvedTheme, darkTheme, lightTheme]);
 
+  useEffect(() => {
+    if (filesError) {
+      toast.error("Error fetching files", {
+        action: {
+          label: "Retry",
+          onClick: () => {
+            refetchFiles();
+          },
+        },
+      });
+    }
+  }, [filesError]);
+
   if (!width) return null;
 
   const percentSizes = {
@@ -583,14 +355,6 @@ export default function EditorLayout({
     registerGeorge(editor, monaco);
     monaco.editor.setModelLanguage(editor.getModel()!, "george");
 
-    // editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, () => {
-    //     setIsSettingsOpen(true);
-    // });
-
-    // editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyG, () => {
-    //     handleAskGeorge();
-    // });
-
     const decorationsCollection = editor.createDecorationsCollection();
     setDecorationsCollection(decorationsCollection);
 
@@ -603,16 +367,9 @@ export default function EditorLayout({
 
   return (
     <>
-      <ManageAccessModal
-        open={!!manageAccessId}
-        setOpen={(open) => setManageAccessId(open ? manageAccessId : null)}
-        workspaceId={manageAccessId}
-        userId={userId}
-      />
       <SettingsModal
         open={isSettingsOpen}
         setOpen={setIsSettingsOpen}
-        userId={userId}
         autoComplete={autoComplete}
         setAutoComplete={setAutoComplete}
         acceptSuggestionOnEnter={acceptSuggestionOnEnter}
@@ -646,11 +403,9 @@ export default function EditorLayout({
             minSize={percentSizes.min}
           >
             <Explorer
-              userId={userId}
               files={filesData}
               onFileClick={handleFileClick}
               openUpload={() => setIsUploadOpen(true)}
-              openAccess={(workspaceId) => setManageAccessId(workspaceId)}
               disableUpload={activeTabIndex === -1}
             />
           </ResizablePanel>
