@@ -55,13 +55,10 @@ Types:
 
 ```
 axiom/
-├── frontend/           # Next.js frontend
-│   ├── app/           # Pages and routing
-│   ├── components/    # React components
-│   └── lib/          # Utilities and helpers
-└── backend/           # Express backend
-    ├── src/          # Source code
-    └── prisma/       # Database schema
+└── frontend/       # Next.js frontend
+   ├── app/         # Pages and routing
+   ├── components/  # React components
+   └── lib/         # Utilities and helpers
 ```
 
 Notable files:
@@ -72,11 +69,6 @@ Notable files:
   - `frontend/components/editor/explorer.tsx` - File explorer
   - `frontend/lib/query.ts` - [Tanstack Query](https://tanstack.com/query/latest) hooks; _write all query and mutation logic here_
   - `frontend/lib/actions.ts` - Data fetching helpers; _write all data fetching logic here_
-- Backend
-  - `backend/src/index.ts` - Backend entry point and HTTP route handling
-  - `backend/src/socketio.ts` - Socket.io event handling for workspace collaboration
-  - `backend/src/utils.ts` - Prisma client operations; _write all database operations here_
-  - `backend/prisma/schema.prisma` - Prisma database schema
 
 ## Need Help?
 
