@@ -18,3 +18,8 @@ export async function getFiles() {
   );
   return await files.json();
 }
+
+export async function getFile(path: string) {
+  const file = await fetch(`https://student.cs.uwaterloo.ca/~se212/${path}`);
+  return await file.text();
+}

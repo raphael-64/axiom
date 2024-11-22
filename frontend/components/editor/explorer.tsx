@@ -44,11 +44,13 @@ export default function Explorer({
   onFileClick,
   openUpload,
   disableUpload,
+  resetFile,
 }: {
   files: FilesResponse;
   onFileClick: (path: string, name: string, initialContent?: string) => void;
   openUpload: () => void;
   disableUpload: boolean;
+  resetFile: (path: string) => void;
 }) {
   return (
     <div className="h-full flex flex-col">
@@ -79,12 +81,14 @@ export default function Explorer({
               onFileClick(path, name);
             }
           }}
+          resetFile={resetFile}
         />
         {files.map((folder) => (
           <FolderItem
             key={folder.name}
             folder={folder}
             onFileClick={onFileClick}
+            resetFile={resetFile}
           />
         ))}
       </div>
@@ -95,9 +99,11 @@ export default function Explorer({
 function FolderItem({
   folder,
   onFileClick,
+  resetFile,
 }: {
   folder?: FilesResponse[0];
   onFileClick: (path: string, name: string, initialContent?: string) => void;
+  resetFile: (path: string) => void;
 }) {
   const folderName = folder?.name || "";
   const [isOpen, setIsOpen] = useState(() => getStoredFolderState(folderName));
@@ -128,7 +134,12 @@ function FolderItem({
       {isOpen && (
         <>
           {files.map((file) => (
-            <File key={file.id} file={file} onFileClick={onFileClick} />
+            <File
+              key={file.id}
+              file={file}
+              onFileClick={onFileClick}
+              resetFile={resetFile}
+            />
           ))}
         </>
       )}
@@ -139,12 +150,14 @@ function FolderItem({
 function File({
   file,
   onFileClick,
+  resetFile,
 }: {
   file: {
     name: string;
     path: string;
   };
   onFileClick: (path: string, name: string, initialContent?: string) => void;
+  resetFile: (path: string) => void;
 }) {
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -161,7 +174,7 @@ function File({
         setOpen={setIsResetConfirmOpen}
         title="Reset File"
         description="Are you sure you want to reset this file? All changes will be lost."
-        onConfirm={() => console.log("reset", file.path)}
+        onConfirm={() => resetFile(file.path)}
       />
       <ContextMenu onOpenChange={setIsContextMenuOpen}>
         <ContextMenuTrigger asChild>

@@ -26,7 +26,7 @@ import Toolbar from "./toolbar";
 // Types and utilities
 import { FilesResponse, Tab } from "@/lib/types";
 import { registerGeorge } from "@/lib/lang";
-import { askGeorge } from "@/lib/actions";
+import { askGeorge, getFile } from "@/lib/actions";
 import { ImperativePanelHandle } from "react-resizable-panels";
 import { toast } from "sonner";
 
@@ -119,6 +119,21 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     }
   };
 
+  const handleResetFile = async (path: string) => {
+    localStorage.removeItem(path);
+
+    // If file is currently open, refresh its content
+    const tabIndex = openTabs.findIndex((tab) => tab.path === path);
+    if (tabIndex >= 0) {
+      if (tabIndex === activeTabIndex) {
+        // Re-fetch and update editor content if it's the active tab
+        await handleEditorContent(path);
+      }
+    }
+
+    refetchFiles();
+  };
+
   const handleAskGeorge = async () => {
     const body = editorRef?.getModel()?.getValue();
     if (!body || loading) return;
@@ -190,8 +205,20 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     // Cleanup previous
     monacoBinding?.destroy();
 
-    // Local file
-    const content = localStorage.getItem(path) || "";
+    // Check localStorage first
+    let content = localStorage.getItem(path);
+
+    // If no local content, fetch from API
+    if (!content) {
+      try {
+        content = await getFile(path);
+      } catch (error) {
+        console.error("Failed to fetch file:", error);
+        content = "";
+        toast.error("Failed to load file");
+      }
+    }
+
     const model = monacoInstance.editor.createModel(content, "george");
     editorRef.setModel(model);
 
@@ -399,6 +426,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
               onFileClick={handleFileClick}
               openUpload={() => setIsUploadOpen(true)}
               disableUpload={activeTabIndex === -1}
+              resetFile={handleResetFile}
             />
           </ResizablePanel>
           <ResizableHandle />
