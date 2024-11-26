@@ -4,7 +4,7 @@ import { PanelBottom, PanelLeft, Settings } from "lucide-react";
 interface ToolbarProps {
   loading: boolean;
   activeTabIndex: number;
-  handleAskGeorge: () => void;
+  // handleAskGeorge: () => void;
   toggleExplorer: () => void;
   toggleOutput: () => void;
   setIsSettingsOpen: (open: boolean) => void;
@@ -13,7 +13,7 @@ interface ToolbarProps {
 export default function Toolbar({
   loading,
   activeTabIndex,
-  handleAskGeorge,
+  // handleAskGeorge,
   toggleExplorer,
   toggleOutput,
   setIsSettingsOpen,
@@ -25,9 +25,9 @@ export default function Toolbar({
         <TooltipButton
           variant="secondary"
           size="sm"
-          onClick={handleAskGeorge}
+          // onClick={handleAskGeorge}
           tooltip="Ask George (⌘G)"
-          disabled={loading || activeTabIndex === -1}
+          disabled
         >
           {loading ? "Asking George..." : "Ask George"}
         </TooltipButton>

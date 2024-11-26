@@ -51,11 +51,12 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
   const darkTheme = colorTheme?.darkTheme;
   const lightTheme = colorTheme?.lightTheme;
 
-  const {
-    data: filesData,
-    error: filesError,
-    refetch: refetchFiles,
-  } = useFiles(files);
+  const filesData = files;
+  // const {
+  //   data: filesData = [],
+  //   error: filesError,
+  //   refetch: refetchFiles,
+  // } = useFiles(files);
 
   const explorerRef = useRef<ImperativePanelHandle>(null);
   const outputRef = useRef<ImperativePanelHandle>(null);
@@ -131,25 +132,26 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
       }
     }
 
-    refetchFiles();
+    // refetchFiles();
   };
 
   const handleAskGeorge = async () => {
-    const body = editorRef?.getModel()?.getValue();
-    if (!body || loading) return;
+    // const body = editorRef?.getModel()?.getValue();
+    // if (!body || loading) return;
 
-    setLoading(true);
-    try {
-      const response = await askGeorge(body);
-      setGeorgeResponse(response);
-      outputRef.current?.expand();
-    } catch (error) {
-      console.error(error);
-      toast.error("Error: Failed to get response from George");
-      setGeorgeResponse("Error: Failed to get response from George");
-    } finally {
-      setLoading(false);
-    }
+    // setLoading(true);
+    // try {
+    //   const response = await askGeorge(body);
+    //   setGeorgeResponse(response);
+    //   outputRef.current?.expand();
+    // } catch (error) {
+    //   console.error(error);
+    //   toast.error("Error: Failed to get response from George");
+    //   setGeorgeResponse("Error: Failed to get response from George");
+    // } finally {
+    //   setLoading(false);
+    // }
+    console.error("Ask George not available in this version");
   };
 
   const handleKeyDown = useCallback(
@@ -164,10 +166,10 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
 
       const cmdOrCtrl = isMac ? e.metaKey : e.ctrlKey;
 
-      if (cmdOrCtrl && e.key.toLowerCase() === "g") {
-        e.preventDefault();
-        handleAskGeorge();
-      }
+      // if (cmdOrCtrl && e.key.toLowerCase() === "g") {
+      //   e.preventDefault();
+      //   handleAskGeorge();
+      // }
       if (cmdOrCtrl && e.key === "b") {
         e.preventDefault();
         toggleExplorer();
@@ -186,7 +188,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
       }
     },
     [
-      handleAskGeorge,
+      // handleAskGeorge,
       toggleExplorer,
       toggleOutput,
       setIsSettingsOpen,
@@ -206,18 +208,18 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     monacoBinding?.destroy();
 
     // Check localStorage first
-    let content = localStorage.getItem(path);
+    let content = localStorage.getItem(path) || "";
 
     // If no local content, fetch from API
-    if (!content) {
-      try {
-        content = await getFile(path);
-      } catch (error) {
-        console.error("Failed to fetch file:", error);
-        content = "";
-        toast.error("Failed to load file");
-      }
-    }
+    // if (!content) {
+    //   try {
+    //     content = await getFile(path);
+    //   } catch (error) {
+    //     console.error("Failed to fetch file:", error);
+    //     content = "";
+    //     toast.error("Failed to load file");
+    //   }
+    // }
 
     const model = monacoInstance.editor.createModel(content, "george");
     editorRef.setModel(model);
@@ -317,18 +319,18 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
     monacoInstance.editor.setTheme(resolvedTheme === "dark" ? "dark" : "light");
   }, [monacoInstance, resolvedTheme, darkTheme, lightTheme]);
 
-  useEffect(() => {
-    if (filesError) {
-      toast.error("Error fetching files", {
-        action: {
-          label: "Retry",
-          onClick: () => {
-            refetchFiles();
-          },
-        },
-      });
-    }
-  }, [filesError]);
+  // useEffect(() => {
+  //   if (filesError) {
+  //     toast.error("Error fetching files", {
+  //       action: {
+  //         label: "Retry",
+  //         onClick: () => {
+  //           refetchFiles();
+  //         },
+  //       },
+  //     });
+  //   }
+  // }, [filesError]);
 
   if (!width) return null;
 
@@ -404,7 +406,7 @@ export default function EditorLayout({ files }: { files: FilesResponse }) {
         <Toolbar
           loading={loading}
           activeTabIndex={activeTabIndex}
-          handleAskGeorge={handleAskGeorge}
+          // handleAskGeorge={handleAskGeorge}
           toggleExplorer={toggleExplorer}
           toggleOutput={toggleOutput}
           setIsSettingsOpen={setIsSettingsOpen}
