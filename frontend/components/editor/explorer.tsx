@@ -70,7 +70,7 @@ export default function Explorer({
         </TooltipButton>
       </div>
       <div className="overflow-y-auto flex-1 text-sm">
-        <FolderItem
+        {/* <FolderItem
           key={MISC_FOLDER.name}
           folder={MISC_FOLDER}
           onFileClick={(path, name) => {
@@ -82,7 +82,7 @@ export default function Explorer({
             }
           }}
           resetFile={resetFile}
-        />
+        /> */}
         {files.map((folder) => (
           <FolderItem
             key={folder.name}
