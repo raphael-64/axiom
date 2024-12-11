@@ -14,10 +14,12 @@ export const registerGeorge: OnMount = (editor, monaco) => {
     surroundingPairs: [
       { open: "{", close: "}" },
       { open: "(", close: ")" },
+      { open: "[", close: "]" },
     ],
     autoClosingPairs: [
       { open: "{", close: "}" },
       { open: "(", close: ")" },
+      { open: "[", close: "]" },
     ],
     indentationRules: {
       increaseIndentPattern: /{$/,
@@ -918,33 +920,6 @@ export const registerGeorge: OnMount = (editor, monaco) => {
         editor.setPosition({
           lineNumber: position.lineNumber + 1,
           column: (currentIndent + additionalIndent).length + 1,
-        });
-        return;
-      }
-
-      // Handle empty line numbers (e.g., "1) ")
-      const emptyMatch = lineContent.match(/^\s*(\d+)\)\s*$/);
-      if (emptyMatch) {
-        e.preventDefault();
-        const currentIndent = lineContent.match(/^\s*/)?.[0] || "";
-
-        // Remove the line number, leaving just indentation
-        const operations = [
-          {
-            range: new monaco.Range(
-              position.lineNumber,
-              1,
-              position.lineNumber,
-              lineContent.length + 1
-            ),
-            text: currentIndent,
-          },
-        ];
-
-        model.pushEditOperations([], operations, () => null);
-        editor.setPosition({
-          lineNumber: position.lineNumber,
-          column: currentIndent.length + 1,
         });
         return;
       }
