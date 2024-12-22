@@ -2,6 +2,8 @@
 
 An editor interface for George, for [SE212 (Logic and Computation)](https://student.cs.uwaterloo.ca/~se212/notes.html) at the University of Waterloo.
 
+![axiom-cover](https://github.com/user-attachments/assets/bbec3b04-8443-4735-a149-289bc5abbdf3)
+
 ## Features
 
 - **Multiplayer collaboration with [Workspaces](#workspaces)**
