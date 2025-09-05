@@ -228,6 +228,39 @@ app.get("/api/workspaces/invites/user/:userId", async (req, res) => {
   }
 });
 
+// Proxy endpoint for files.json to avoid CORS issues
+app.get("/api/files", async (req: Request, res: Response) => {
+  try {
+    const files = await getFiles();
+    res.json(files);
+  } catch (error) {
+    console.error("Failed to fetch files", error);
+    res.status(500).json({ message: "Failed to fetch files" });
+  }
+});
+
+// Proxy endpoint for askGeorge to avoid CORS issues
+app.post("/api/ask-george", async (req: Request, res: Response) => {
+  try {
+    const { body: code } = req.body;
+    const response = await fetch(
+      "https://student.cs.uwaterloo.ca/~se212/george/ask-george/cgi-bin/george.cgi/check",
+      {
+        method: "POST",
+        headers: {
+          "Content-type": "text/plain",
+        },
+        body: code,
+      }
+    );
+    const result = await response.text();
+    res.send(result);
+  } catch (error) {
+    console.error("Failed to ask George", error);
+    res.status(500).json({ message: "Failed to ask George" });
+  }
+});
+
 // Start the server
 httpServer.listen(port, () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);

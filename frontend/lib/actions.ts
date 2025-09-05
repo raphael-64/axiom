@@ -1,23 +1,18 @@
 import { Workspace } from "./types";
 
-const askGeorgeUrl =
-  "https://student.cs.uwaterloo.ca/~se212/george/ask-george/cgi-bin/george.cgi/check";
-
 export async function askGeorge(body: string) {
-  const response = await fetch(askGeorgeUrl, {
+  const response = await fetch(`${API_BASE_URL}/api/ask-george`, {
     method: "POST",
     headers: {
-      "Content-type": "text/plain",
+      "Content-Type": "application/json",
     },
-    body,
+    body: JSON.stringify({ body }),
   });
   return response.text();
 }
 
 export async function getFiles() {
-  const files = await fetch(
-    "https://student.cs.uwaterloo.ca/~se212/files.json"
-  );
+  const files = await fetch(`${API_BASE_URL}/api/files`);
   return await files.json();
 }
 
